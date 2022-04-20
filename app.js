@@ -48,17 +48,18 @@ app.use('/api/greeting', (request, response) => {
 
 app.use('/api/getEventos', (request, response) => {
   const connection = mysql.createConnection({
-    host: '10.2.111.27',
-    port: '3306',
+    // host: '10.2.111.27',
+    localAddress: '10.2.111.27',
     user: 'root',
     password: 'ROOT',
-    database: 'sgc'
+    database: 'sgc',
+    connectTimeout: 10000
   });
 
   connection.connect(error => {
     if (error) {
       console.log(error);
-      response.send({ content: 'No connection in the db.' });
+      response.send({ content: `No connection in the db: ${error}` });
     }
     // if (error) throw error;
     console.log('Successfully connected to the database.');
