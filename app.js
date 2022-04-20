@@ -44,7 +44,7 @@ app.use('/api/testing-connection', (request, response) => {
   const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '',
+    password: 'root',
     database: 'sgc'
   });
 
