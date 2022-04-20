@@ -40,28 +40,36 @@ app.use('/api/greeting', (request, response) => {
   response.send({ content: `Hola, ${name || 'World!'}` });
 });
 
+// TCP/IP Server: 10.2.111.27
+// Port: 3306
+// User: root
+// Password: ROOT
+// Database: sgc
+
 app.use('/api/getEventos', (request, response) => {
   const connection = mysql.createConnection({
-    // host: 'localhost',
     host: '10.2.111.27',
     port: '3306',
     user: 'root',
-    // password: '',
     password: 'ROOT',
     database: 'sgc'
   });
 
   connection.connect(error => {
-    if (error) throw error;
-    // response.send({ content: 'No connection in the db.' });
+    if (error) {
+      console.log(error);
+      response.send({ content: 'No connection in the db.' });
+    }
+    // if (error) throw error;
     console.log('Successfully connected to the database.');
+    response.send({ content: 'Successfully connected to the database.' });
   });
 
-  connection.query('select * from ri505_evento', function (error, results, fields) {
-    if (error) response.send({ error: error });
-    // res.json(results);
-    response.send({ results });
-  });
+  // connection.query('select * from ri505_evento', function (error, results, fields) {
+  //   if (error) response.send({ error: error });
+  //   // res.json(results);
+  //   response.send({ results });
+  // });
 });
 
 module.exports = app;
