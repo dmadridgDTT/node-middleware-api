@@ -42,12 +42,12 @@ app.use('/api/greeting', (request, response) => {
 
 app.use('/api/getEventos', (request, response) => {
   const connection = mysql.createConnection({
-    host: 'localhost',
-    // host: '10.2.111.27',
+    // host: 'localhost',
+    host: '10.2.111.27',
     port: '3306',
     user: 'root',
-    password: '',
-    // password: 'ROOT',
+    // password: '',
+    password: 'ROOT',
     database: 'sgc'
   });
 
