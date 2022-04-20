@@ -47,12 +47,16 @@ app.use('/api/greeting', (request, response) => {
 // Database: sgc
 
 app.use('/api/getEventos', (request, response) => {
+  const host = request.query ? request.query.host : undefined;
+  const user = request.query ? request.query.user : undefined;
+  const password = request.query ? request.query.password : undefined;
+  const db = request.query ? request.query.db : undefined;
+
   const connection = mysql.createConnection({
-    // host: '10.2.111.27',
-    localAddress: '10.2.111.27',
-    user: 'root',
-    password: 'ROOT',
-    database: 'sgc',
+    host: host,
+    user: user,
+    password: password,
+    database: db,
     connectTimeout: 10000
   });
 
