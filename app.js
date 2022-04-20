@@ -42,7 +42,7 @@ app.use('/api/greeting', (request, response) => {
 app.use('/api/testing-connection', (request, response) => {
   let errors = '';
   const connection = mysql.createConnection({
-    host: 'localhost',
+    host: '10.10.10.10',
     user: 'root',
     password: 'root',
     database: 'sgc'
