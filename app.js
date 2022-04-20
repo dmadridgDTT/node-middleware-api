@@ -25,6 +25,7 @@ const bodyParser = require('body-parser');
 const app = express();
 
 const mysql = require('mysql');
+const res = require('express/lib/response');
 
 // const connection = mysql.createConnection('mysql://user:pass@host/db?debug=true&charset=BIG5_CHINESE_CI&timezone=-0700');
 
@@ -39,25 +40,28 @@ app.use('/api/greeting', (request, response) => {
   response.send({ content: `Hola, ${name || 'World!'}` });
 });
 
-app.use('/api/testing-connection', (request, response) => {
-  let errors = '';
+app.use('/api/getEventos', (request, response) => {
   const connection = mysql.createConnection({
-    host: '10.10.10.10',
+    host: 'localhost',
+    // host: '10.2.111.27',
+    port: '3306',
     user: 'root',
-    password: 'root',
+    password: '',
+    // password: 'ROOT',
     database: 'sgc'
   });
 
-  connection.connect(function (err) {
-    // en caso de error
-    if (err) {
-      errors = err;
-      console.log(err.code);
-      console.log(err.fatal);
-    }
+  connection.connect(error => {
+    if (error) throw error;
+    // response.send({ content: 'No connection in the db.' });
+    console.log('Successfully connected to the database.');
   });
 
-  response.send({ errors });
+  connection.query('select * from ri505_evento', function (error, results, fields) {
+    if (error) response.send({ error: error });
+    // res.json(results);
+    response.send({ results });
+  });
 });
 
 module.exports = app;
