@@ -24,6 +24,10 @@ const bodyParser = require('body-parser');
 
 const app = express();
 
+const mysql = require('mysql');
+
+// const connection = mysql.createConnection('mysql://user:pass@host/db?debug=true&charset=BIG5_CHINESE_CI&timezone=-0700');
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/', express.static(path.join(__dirname, 'public')));
@@ -33,6 +37,27 @@ app.use('/licenses', express.static(path.join(__dirname, 'licenses')));
 app.use('/api/greeting', (request, response) => {
   const name = request.query ? request.query.name : undefined;
   response.send({ content: `Hola, ${name || 'World!'}` });
+});
+
+app.use('/api/testing-connection', (request, response) => {
+  let errors = '';
+  const connection = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: '',
+    database: 'sgc'
+  });
+
+  connection.connect(function (err) {
+    // en caso de error
+    if (err) {
+      errors = err;
+      console.log(err.code);
+      console.log(err.fatal);
+    }
+  });
+
+  response.send({ errors });
 });
 
 module.exports = app;
