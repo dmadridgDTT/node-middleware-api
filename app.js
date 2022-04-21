@@ -25,7 +25,7 @@ const bodyParser = require('body-parser');
 const app = express();
 
 const mysql = require('mysql');
-const res = require('express/lib/response');
+// const res = require('express/lib/response');
 
 // const connection = mysql.createConnection('mysql://user:pass@host/db?debug=true&charset=BIG5_CHINESE_CI&timezone=-0700');
 
@@ -36,8 +36,31 @@ app.use('/', express.static(path.join(__dirname, 'public')));
 app.use('/licenses', express.static(path.join(__dirname, 'licenses')));
 
 app.use('/api/greeting', (request, response) => {
-  const name = request.query ? request.query.name : undefined;
-  response.send({ content: `Hola, ${name || 'World!'}` });
+  // res.json({});
+  const host = request.query ? request.query.host : undefined;
+  const port = request.query ? request.query.port : undefined;
+  const user = request.query ? request.query.user : undefined;
+  const password = request.query ? request.query.password : undefined;
+  const db = request.query ? request.query.db : undefined;
+
+  const connection = mysql.createConnection({
+    host: host,
+    port: port,
+    user: user,
+    password: password,
+    database: db,
+    connectTimeout: 10000
+  });
+
+  connection.connect(error => {
+    if (error) {
+      console.log(error);
+      response.send({ content: `No connection in the db: ${error}` });
+    }
+    // if (error) throw error;
+    console.log('Successfully connected to the database.');
+    response.send({ content: 'Successfully connected to the database.' });
+  });
 });
 
 // TCP/IP Server: 10.2.111.27
@@ -48,12 +71,14 @@ app.use('/api/greeting', (request, response) => {
 
 app.use('/api/getEventos', (request, response) => {
   const host = request.query ? request.query.host : undefined;
+  const port = request.query ? request.query.port : undefined;
   const user = request.query ? request.query.user : undefined;
   const password = request.query ? request.query.password : undefined;
   const db = request.query ? request.query.db : undefined;
 
   const connection = mysql.createConnection({
     host: host,
+    port: port,
     user: user,
     password: password,
     database: db,
