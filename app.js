@@ -36,31 +36,7 @@ app.use('/', express.static(path.join(__dirname, 'public')));
 app.use('/licenses', express.static(path.join(__dirname, 'licenses')));
 
 app.use('/api/greeting', (request, response) => {
-  // res.json({});
-  const host = request.query ? request.query.host : undefined;
-  const port = request.query ? request.query.port : undefined;
-  const user = request.query ? request.query.user : undefined;
-  const password = request.query ? request.query.password : undefined;
-  const db = request.query ? request.query.db : undefined;
-
-  const connection = mysql.createConnection({
-    host: host,
-    port: port,
-    user: user,
-    password: password,
-    database: db,
-    connectTimeout: 10000
-  });
-
-  connection.connect(error => {
-    if (error) {
-      console.log(error);
-      response.send({ content: `No connection in the db: ${error}` });
-    }
-    // if (error) throw error;
-    console.log('Successfully connected to the database.');
-    response.send({ content: 'Successfully connected to the database.' });
-  });
+  response.status(200).json({ result: 'Hello World!' });
 });
 
 // TCP/IP Server: 10.2.111.27
@@ -70,36 +46,33 @@ app.use('/api/greeting', (request, response) => {
 // Database: sgc
 
 app.use('/api/getEventos', (request, response) => {
-  const host = request.query ? request.query.host : undefined;
-  const port = request.query ? request.query.port : undefined;
-  const user = request.query ? request.query.user : undefined;
-  const password = request.query ? request.query.password : undefined;
-  const db = request.query ? request.query.db : undefined;
+  const { host, user, password, db } = request.query;
 
-  const connection = mysql.createConnection({
-    host: host,
-    port: port,
-    user: user,
-    password: password,
-    database: db,
-    connectTimeout: 10000
-  });
+  // || typeof (password) === 'undefined' || password === ''
+  if (typeof (host) === 'undefined' || host === '' || typeof (user) === 'undefined' || user === '' || typeof (db) === 'undefined' || db === '') {
+    response.status(503).send({ content: 'No valid credentials.' });
+  } else {
+    const connection = mysql.createConnection({
+      host: host,
+      port: 3306,
+      user: user,
+      password: password,
+      database: db,
+      connectTimeout: 10000
+    });
 
-  connection.connect(error => {
-    if (error) {
-      console.log(error);
-      response.send({ content: `No connection in the db: ${error}` });
-    }
-    // if (error) throw error;
-    console.log('Successfully connected to the database.');
-    response.send({ content: 'Successfully connected to the database.' });
-  });
-
-  // connection.query('select * from ri505_evento', function (error, results, fields) {
-  //   if (error) response.send({ error: error });
-  //   // res.json(results);
-  //   response.send({ results });
-  // });
+    connection.connect(error => {
+      if (error) {
+        response.status(503).send({ content: `No connection in the db: ${error}` });
+      } else {
+        // console.log('Successfully connected to the database.');
+        connection.query('select * from ri505_evento', function (error, results, fields) {
+          if (error) response.send({ error: error });
+          response.json({ results });
+        });
+      }
+    });
+  }
 });
 
 module.exports = app;
