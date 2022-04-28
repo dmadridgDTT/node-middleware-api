@@ -25,17 +25,32 @@ const bodyParser = require('body-parser');
 const app = express();
 
 const mysql = require('mysql');
+const router = express.Router();
 // const res = require('express/lib/response');
 
 // const connection = mysql.createConnection('mysql://user:pass@host/db?debug=true&charset=BIG5_CHINESE_CI&timezone=-0700');
 
+function databaseConnection(credentials) {
+  if (
+    typeof (credentials.host) === 'undefined' || credentials.host === '' ||
+    typeof (credentials.user) === 'undefined' || credentials.user === '' ||
+    typeof (credentials.database) === 'undefined' || credentials.database === ''
+    // || typeof (credentials.password) === 'undefined' || credentials.password === ''
+  ) {
+    return `No valid credentials: ${JSON.stringify(credentials)}`;
+  } else {
+    return true;
+  }
+}
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use('/', express.static(path.join(__dirname, 'public')));
+app.use('/', router);
+app.use('/home', express.static(path.join(__dirname, 'public')));
 // Expose the license.html at http[s]://[host]:[port]/licences/licenses.html
 app.use('/licenses', express.static(path.join(__dirname, 'licenses')));
 
-app.use('/api/greeting', (request, response) => {
+app.get('/api/greeting', (request, response) => {
   response.status(200).json({ result: 'Hello World!' });
 });
 
@@ -45,33 +60,94 @@ app.use('/api/greeting', (request, response) => {
 // Password: ROOT
 // Database: sgc
 
-app.use('/api/getEventos', (request, response) => {
+app.get('/api/getServicios', (request, response) => {
   const { host, user, password, db } = request.query;
 
-  // || typeof (password) === 'undefined' || password === ''
-  if (typeof (host) === 'undefined' || host === '' || typeof (user) === 'undefined' || user === '' || typeof (db) === 'undefined' || db === '') {
-    response.status(503).send({ content: 'No valid credentials.' });
-  } else {
-    const connection = mysql.createConnection({
-      host: host,
-      port: 3306,
-      user: user,
-      password: password,
-      database: db,
-      connectTimeout: 10000
+  const credentials = {
+    host: host,
+    port: 3306,
+    user: user,
+    password: password,
+    database: db,
+    connectTimeout: 10000
+  };
+
+  try {
+    const validateCredentials = databaseConnection(credentials);
+    if (typeof (validateCredentials) === 'string') return response.status(401).json({ error: validateCredentials });
+
+    const connection = mysql.createConnection(credentials);
+    connection.connect(error => {
+      if (error) return response.status(401).json({ error: `No connection in the db: ${error}` });
     });
 
-    connection.connect(error => {
+    // connection.query('SELECT VERSION();', function (error, results, fields) {
+    connection.query('SELECT serv.id_autotanque, serv.consecutivo2, serv.ts1, serv.volumen, cliente.cuenta, cliente.id_precio, serv.precio_str FROM ri505_servicio serv INNER JOIN cliente ON serv.id_Cliente = cliente.id_Cliente', function (error, results, fields) {
       if (error) {
-        response.status(503).send({ content: `No connection in the db: ${error}` });
+        return response.status(401).json({ error: error });
       } else {
-        // console.log('Successfully connected to the database.');
-        connection.query('select * from ri505_evento', function (error, results, fields) {
-          if (error) response.send({ error: error });
-          response.json({ results });
-        });
+        return response.json({ results });
       }
     });
+  } catch (error) {
+    return response.status(401).send({ response: error });
+  }
+});
+
+router.post('/api/syncPrices', (request, response) => {
+  const { host, user, password, db, prices } = request.body;
+  return response.send({ response: request.body });
+});
+
+router.post('/api/syncClientes', (request, response) => {
+  const { host, user, password, db } = request.body;
+  const clientes = JSON.parse(request.body.clientes);
+
+  const credentials = {
+    host: host,
+    port: 3306,
+    user: user,
+    password: password,
+    database: db,
+    connectTimeout: 10000
+  };
+
+  if (clientes.length === 0) return response.status(401).json({ error: 'No clientes to sync' });
+
+  try {
+    const validateCredentials = databaseConnection(credentials);
+    if (typeof (validateCredentials) === 'string') return response.status(401).json({ error: validateCredentials });
+
+    const connection = mysql.createConnection(credentials);
+    connection.connect(error => {
+      if (error) {
+        return response.status(401).json({ error: `No connection in the db: ${error}` });
+      }
+    });
+
+    clientes.forEach(cliente => {
+      connection.query('SELECT * FROM cliente WHERE id_Cliente = ?', [cliente.id_Cliente], function (error, results, fields) {
+        if (error) return response.status(401).json({ error: error });
+        if (results.length === 0) {
+          console.log('Inserting cliente');
+          connection.query('INSERT INTO cliente SET ?', cliente, function (error, results, fields) {
+            if (error) return response.status(401).json({ error: error.sqlMessage });
+          });
+        } else {
+          console.log('Updating cliente');
+          connection.query('UPDATE cliente SET ? WHERE id_Cliente = ?', [cliente, cliente.id_Cliente], function (error, results, fields) {
+            if (error) return response.status(401).json({ error: error.sqlMessage });
+          });
+        }
+      });
+    });
+    return response.status(201).json({
+      status: 'success',
+      message: 'Clientes synced successfully.',
+      clientes: clientes.length
+    });
+  } catch (error) {
+    return response.status(401).send({ response: `Error: ${error}` });
   }
 });
 

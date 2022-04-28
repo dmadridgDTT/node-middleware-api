@@ -24,53 +24,194 @@
   <title>API Level 0 Example - Node.js</title>
 
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
-        integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 
 </head>
 
 <body>
 
-<div class="container">
+  <div class="container">
 
-  <div>
-    <h1>API Level 0 Example - Node.js</h1>
-    <p class="lead">This Example showcases a basic mapping of a business operation to a remote endpoint. By
-      taking this approach, clients leverage the HTTP protocol as a transport mechanism to call upon services.
-      Application engineers define their APIs using a broad interpretation of REST fundamentals, encouraging
-      freedom in design and quick prototyping.
-    </p>
+    <div>
+      <h1>API Level 0 Example - Node.js</h1>
+      <p class="lead">This Example showcases a basic mapping of a business operation to a remote endpoint. By
+        taking this approach, clients leverage the HTTP protocol as a transport mechanism to call upon services.
+        Application engineers define their APIs using a broad interpretation of REST fundamentals, encouraging
+        freedom in design and quick prototyping.
+      </p>
 
-    <h2>Using the greeting service</h2>
+      <h2>Using the greeting service</h2>
 
-    <form class="form-inline">
-      <div class="form-group">
-        <label for="name">Name</label>
-        <input type="text" class="form-control" id="name" placeholder="World">
-      </div>
-      <button id="invoke" type="submit" class="btn btn-success">Invoke</button>
-    </form>
+      <form class="form-inline">
+        <div class="form-group">
+          <label for="name">Name</label>
+          <input type="text" class="form-control" id="name" placeholder="World">
+        </div>
+        <button id="invoke" type="submit" class="btn btn-success">Invoke</button>
+      </form>
 
-    <h3>Result:</h3>
-    <pre><code id="greeting-result">Invoke the service to see the result.</code></pre>
+      <h3>Result:</h3>
+      <pre><code id="greeting-result">Invoke the service to see the result.</code></pre>
+    </div>
   </div>
-</div>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
-        integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
-        crossorigin="anonymous"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+    integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+    crossorigin="anonymous"></script>
 
-<script>
+  <script>
     $(document).ready(() => {
-       $("#invoke").click((e) => {
-          const n = $("#name").val() || "World";
-          $.getJSON(`/api/greeting?name=${n}`, (res) => {
-              $("#greeting-result").html(JSON.stringify(res));
-          });
-          e.preventDefault();
-       });
+      $("#invoke").click((e) => {
+        const name = $("#name").val();
+        let clientes = [
+          {
+            'id_Cliente': 1,
+            'cuenta': '1234234',
+            'num_ruta': '12',
+            'Nombre': 'Testing 1',
+            'Domicilio': 'sadfdsafdsaf',
+            'Colonia': 'asdfasdfds',
+            'CP': '82129',
+            'Ciudad': 'Mazatlán',
+            'RFC': '@*#SADFSDAF',
+            'Telefono': '6691442298',
+            'Derechos': '0002',
+            'Contador': '1',
+            'Comentario1': '',
+            'Comentario2': '@14',
+            'id_precio': '1',
+            'id_impuesto': '2',
+            'GPS': 'sadfasdfasdfasdfasdfasfadsfsadf',
+            'Tiempo_inicio': '12:00:00',
+            'Tiempo_fin': '11:59:00',
+            'CURP': '99999-V',
+            'Saldo': '0',
+            'PrecioComer': '0',
+            'num_fact': '1',
+            'observacion1': 'Observacion 1',
+            'observacion2': 'Observacion 2',
+            'observacion3': 'Observacion 3',
+            'observacion4': 'Observacion 4',
+            'observacion5': 'Observacion 5',
+            'observacion6': 'Observacion 6',
+            'observacion7': 'Observacion 7',
+            'observacion8': 'Observacion 8',
+            'observacion9': 'Observacion 9',
+            'observacion10': 'Observacion 10'
+          }
+          // , {
+          //   'id_Cliente': 2,
+          //   'cuenta': '1234234',
+          //   'num_ruta': '12',
+          //   'Nombre': 'Testing 2',
+          //   'Domicilio': 'sadfdsafdsaf',
+          //   'Colonia': 'asdfasdfds',
+          //   'CP': '82129',
+          //   'Ciudad': 'Mazatlán',
+          //   'RFC': '@*#SADFSDAF',
+          //   'Telefono': '6691442298',
+          //   'Derechos': '0002',
+          //   'Contador': '1',
+          //   'Comentario1': '',
+          //   'Comentario2': '@14',
+          //   'id_precio': '1',
+          //   'id_impuesto': '2',
+          //   'GPS': 'sadfasdfasdfasdfasdfasfadsfsadf',
+          //   'Tiempo_inicio': '12:00:00',
+          //   'Tiempo_fin': '11:59:00',
+          //   'CURP': '99999-V',
+          //   'Saldo': '0',
+          //   'PrecioComer': '0',
+          //   'num_fact': '1',
+          //   'observacion1': 'Observacion 1',
+          //   'observacion2': 'Observacion 2',
+          //   'observacion3': 'Observacion 3',
+          //   'observacion4': 'Observacion 4',
+          //   'observacion5': 'Observacion 5',
+          //   'observacion6': 'Observacion 6',
+          //   'observacion7': 'Observacion 7',
+          //   'observacion8': 'Observacion 8',
+          //   'observacion9': 'Observacion 9',
+          //   'observacion10': 'Observacion 10'
+          // }, {
+          //   'id_Cliente': 3,
+          //   'cuenta': '1234234',
+          //   'num_ruta': '12',
+          //   'Nombre': 'Testing 3',
+          //   'Domicilio': 'sadfdsafdsaf',
+          //   'Colonia': 'asdfasdfds',
+          //   'CP': '82129',
+          //   'Ciudad': 'Mazatlán',
+          //   'RFC': '@*#SADFSDAF',
+          //   'Telefono': '6691442298',
+          //   'Derechos': '0002',
+          //   'Contador': '1',
+          //   'Comentario1': '',
+          //   'Comentario2': '@14',
+          //   'id_precio': '1',
+          //   'id_impuesto': '2',
+          //   'GPS': 'sadfasdfasdfasdfasdfasfadsfsadf',
+          //   'Tiempo_inicio': '12:00:00',
+          //   'Tiempo_fin': '11:59:00',
+          //   'CURP': '99999-V',
+          //   'Saldo': '0',
+          //   'PrecioComer': '0',
+          //   'num_fact': '1',
+          //   'observacion1': 'Observacion 1',
+          //   'observacion2': 'Observacion 2',
+          //   'observacion3': 'Observacion 3',
+          //   'observacion4': 'Observacion 4',
+          //   'observacion5': 'Observacion 5',
+          //   'observacion6': 'Observacion 6',
+          //   'observacion7': 'Observacion 7',
+          //   'observacion8': 'Observacion 8',
+          //   'observacion9': 'Observacion 9',
+          //   'observacion10': 'Observacion 10'
+          // }
+        ];
+        // array.push({
+        //   "id": "1",
+        //   "price": "100",
+        // });
+
+        // array.push({
+        //   "id": "2",
+        //   "price": "100",
+        // });
+
+        // array.push({
+        //   "id": "3",
+        //   "price": "100",
+        // });
+
+        $.ajax({
+          url: "http://localhost:8080/api/syncClientes",
+          type: "POST",
+          data: {
+            "host": "127.0.0.1",
+            "user": "root",
+            "password": "",
+            "db": "sgc",
+            "clientes": JSON.stringify(clientes)
+          },
+          // contentType: "application/json; charset=utf-8",
+          // dataType: "json",
+          success: (data) => {
+            $("#greeting-result").text(JSON.stringify(data, null, 2));
+          },
+          error: (jqXHR, textStatus, errorThrown) => {
+            $("#greeting-result").text(jqXHR.responseText);
+          }
+        });
+        // const n = $("#name").val() || "World";
+        // $.getJSON(`/api/greeting?name=${n}`, (res) => {
+        //     $("#greeting-result").html(JSON.stringify(res));
+        // });
+        e.preventDefault();
+      });
     });
-</script>
+  </script>
 
 </body>
 
