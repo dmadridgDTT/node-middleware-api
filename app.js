@@ -95,8 +95,47 @@ app.get('/api/getServicios', (request, response) => {
 });
 
 router.post('/api/syncPrices', (request, response) => {
-  const { host, user, password, db, prices } = request.body;
-  return response.send({ response: request.body });
+  const { host, user, password, db } = request.body;
+  const prices = JSON.parse(request.body.prices);
+
+  const credentials = {
+    host: host,
+    port: 3306,
+    user: user,
+    password: password,
+    database: db,
+    connectTimeout: 10000
+  };
+
+  if (prices.length === 0) return response.status(401).json({ error: 'No prices to sync' });
+
+  try {
+    const validateCredentials = databaseConnection(credentials);
+    if (typeof (validateCredentials) === 'string') return response.status(401).json({ error: validateCredentials });
+
+    const connection = mysql.createConnection(credentials);
+    connection.connect(error => {
+      if (error) {
+        return response.status(401).json({ error: `No connection in the db: ${error}` });
+      }
+    });
+
+    prices.forEach(price => {
+      connection.query(`UPDATE ri505_precio SET precio = ${price.precio} WHERE id_precio = '${price.id_precio}'`, function (error, results, fields) {
+        if (error) {
+          return response.status(401).json({ error: error });
+        }
+      });
+    });
+
+    return response.status(201).json({
+      status: 'success',
+      message: 'Prices synced successfully.',
+      prices: prices.length
+    });
+  } catch (error) {
+    return response.status(401).send({ response: `Error: ${error}` });
+  }
 });
 
 router.post('/api/syncClientes', (request, response) => {
@@ -145,6 +184,58 @@ router.post('/api/syncClientes', (request, response) => {
       status: 'success',
       message: 'Clientes synced successfully.',
       clientes: clientes.length
+    });
+  } catch (error) {
+    return response.status(401).send({ response: `Error: ${error}` });
+  }
+});
+
+router.post('/api/syncServicios', (request, response) => {
+  const { host, user, password, db } = request.body;
+  const servicios = JSON.parse(request.body.servicios);
+
+  const credentials = {
+    host: host,
+    port: 3306,
+    user: user,
+    password: password,
+    database: db,
+    connectTimeout: 10000
+  };
+
+  if (servicios.length === 0) return response.status(401).json({ error: 'No servicios to sync' });
+
+  try {
+    const validateCredentials = databaseConnection(credentials);
+    if (typeof (validateCredentials) === 'string') return response.status(401).json({ error: validateCredentials });
+
+    const connection = mysql.createConnection(credentials);
+    connection.connect(error => {
+      if (error) {
+        return response.status(401).json({ error: `No connection in the db: ${error}` });
+      }
+    });
+
+    servicios.forEach(servicio => {
+      connection.query('SELECT * FROM servicio WHERE id_Cliente = ?', [servicio.id_Cliente], function (error, results, fields) {
+        if (error) return response.status(401).json({ error: error });
+        if (results.length === 0) {
+          console.log('Inserting servicio');
+          connection.query('INSERT INTO servicio SET ?', servicio, function (error, results, fields) {
+            if (error) return response.status(401).json({ error: error.sqlMessage });
+          });
+        } else {
+          console.log('Updating servicio');
+          connection.query('UPDATE servicio SET ? WHERE id_Cliente = ?', [servicio, servicio.id_Cliente], function (error, results, fields) {
+            if (error) return response.status(401).json({ error: error.sqlMessage });
+          });
+        }
+      });
+    });
+    return response.status(201).json({
+      status: 'success',
+      message: 'Servicios synced successfully.',
+      servicios: servicios.length
     });
   } catch (error) {
     return response.status(401).send({ response: `Error: ${error}` });
