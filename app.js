@@ -45,8 +45,8 @@ function databaseConnection(credentials) {
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use('/', router);
-app.use('/home', express.static(path.join(__dirname, 'public')));
+// app.use('/', router);
+app.use('/', express.static(path.join(__dirname, 'public')));
 // Expose the license.html at http[s]://[host]:[port]/licences/licenses.html
 app.use('/licenses', express.static(path.join(__dirname, 'licenses')));
 
@@ -75,7 +75,7 @@ app.get('/api/getServicios', (request, response) => {
   try {
     const validateCredentials = databaseConnection(credentials);
     if (typeof (validateCredentials) === 'string') return response.status(401).json({ error: validateCredentials });
-
+    x
     const connection = mysql.createConnection(credentials);
     connection.connect(error => {
       if (error) return response.status(401).json({ error: `No connection in the db: ${error}` });
@@ -95,7 +95,7 @@ app.get('/api/getServicios', (request, response) => {
 });
 
 router.post('/api/syncPrices', (request, response) => {
-  const { host, user, password, db } = request.body;
+  const { host, user, password, db } = request.body.credentials;
   const prices = JSON.parse(request.body.prices);
 
   const credentials = {
@@ -139,7 +139,7 @@ router.post('/api/syncPrices', (request, response) => {
 });
 
 router.post('/api/syncClientes', (request, response) => {
-  const { host, user, password, db } = request.body;
+  const { host, user, password, db } = request.body.credentials;
   const clientes = JSON.parse(request.body.clientes);
 
   const credentials = {
@@ -191,7 +191,7 @@ router.post('/api/syncClientes', (request, response) => {
 });
 
 router.post('/api/syncServicios', (request, response) => {
-  const { host, user, password, db } = request.body;
+  const { host, user, password, db } = request.body.credentials;
   const servicios = JSON.parse(request.body.servicios);
 
   const credentials = {
