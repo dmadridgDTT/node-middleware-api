@@ -25,8 +25,7 @@ const bodyParser = require('body-parser');
 const app = express();
 
 const mysql = require('mysql');
-const router = express.Router();
-// const res = require('express/lib/response');
+// const res = require('express/lib/response');x
 
 // const connection = mysql.createConnection('mysql://user:pass@host/db?debug=true&charset=BIG5_CHINESE_CI&timezone=-0700');
 
@@ -42,6 +41,8 @@ function databaseConnection(credentials) {
     return true;
   }
 }
+
+const jsonParser = bodyParser.json();
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -94,7 +95,7 @@ app.get('/api/getServicios', (request, response) => {
   }
 });
 
-router.post('/api/syncPrices', (request, response) => {
+app.post('/api/syncPrices', (request, response) => {
   const { host, user, password, db } = request.body.credentials;
   const prices = JSON.parse(request.body.prices);
 
@@ -138,9 +139,19 @@ router.post('/api/syncPrices', (request, response) => {
   }
 });
 
-router.post('/api/syncClientes', (request, response) => {
+app.post('/api/syncClientes', jsonParser, (request, response) => {
+  if (!request.body) return response.sendStatus(400);
+
+  if (!request.body.credentials) {
+    return response.status(401).json({ error: 'No credentials' });
+  }
+
+  if (!request.body.clientes && request.body.clientes.length === 0) {
+    return response.status(401).json({ error: 'No clientes to sync' });
+  }
+
   const { host, user, password, db } = request.body.credentials;
-  const clientes = JSON.parse(request.body.clientes);
+  const clientes = request.body.clientes;
 
   const credentials = {
     host: host,
@@ -170,6 +181,7 @@ router.post('/api/syncClientes', (request, response) => {
         if (results.length === 0) {
           console.log('Inserting cliente');
           connection.query('INSERT INTO cliente SET ?', cliente, function (error, results, fields) {
+            console.log(error.sqlMessage);
             if (error) return response.status(401).json({ error: error.sqlMessage });
           });
         } else {
@@ -190,7 +202,7 @@ router.post('/api/syncClientes', (request, response) => {
   }
 });
 
-router.post('/api/syncServicios', (request, response) => {
+app.post('/api/syncServicios', (request, response) => {
   const { host, user, password, db } = request.body.credentials;
   const servicios = JSON.parse(request.body.servicios);
 
