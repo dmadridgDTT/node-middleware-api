@@ -1,3 +1,4 @@
+/* eslint-disable space-before-function-paren */
 'use strict';
 
 /*
@@ -61,8 +62,14 @@ app.get('/api/greeting', (request, response) => {
 // Password: ROOT
 // Database: sgc
 
-app.get('/api/getServicios', (request, response) => {
-  const { host, user, password, db } = request.query;
+app.post('/api/getServicios', (request, response) => {
+  if (!request.body) return response.sendStatus(400);
+
+  if (!request.body.credentials) {
+    return response.status(401).json({ error: 'No credentials' });
+  }
+
+  const { host, user, password, db } = request.body.credentials;
 
   const credentials = {
     host: host,
@@ -76,7 +83,7 @@ app.get('/api/getServicios', (request, response) => {
   try {
     const validateCredentials = databaseConnection(credentials);
     if (typeof (validateCredentials) === 'string') return response.status(401).json({ error: validateCredentials });
-    x
+
     const connection = mysql.createConnection(credentials);
     connection.connect(error => {
       if (error) return response.status(401).json({ error: `No connection in the db: ${error}` });
@@ -87,7 +94,7 @@ app.get('/api/getServicios', (request, response) => {
       if (error) {
         return response.status(401).json({ error: error });
       } else {
-        return response.json({ results });
+        return response.json({ data: results });
       }
     });
   } catch (error) {
@@ -181,7 +188,6 @@ app.post('/api/syncClientes', jsonParser, (request, response) => {
         if (results.length === 0) {
           console.log('Inserting cliente');
           connection.query('INSERT INTO cliente SET ?', cliente, function (error, results, fields) {
-            console.log(error.sqlMessage);
             if (error) return response.status(401).json({ error: error.sqlMessage });
           });
         } else {
