@@ -1,27 +1,13 @@
 /* eslint-disable space-before-function-paren */
 'use strict';
 
-/*
- *
- *  Copyright 2016-2017 Red Hat, Inc, and individual contributors.
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- */
-
 const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
+
+const soapRequest = require('easy-soap-request');
+const { DOMParser } = require('xmldom');
+// const fs = require('fs');
 
 const app = express();
 
@@ -258,6 +244,108 @@ app.post('/api/syncServicios', (request, response) => {
   } catch (error) {
     return response.status(401).send({ response: `Error: ${error}` });
   }
+});
+
+// SGC Web Ventas
+
+// Get token
+const getToken = async () => {
+  // Soap request for token generation
+  const url = 'http://testpotogas.sgcweb.com.mx//ws/1094AEV2/v2/soap.php';
+  const headersTest = {
+    'Content-Type': 'text/xml; charset=utf-8',
+    SOAPAction: 'http://testpotogas.sgcweb.com.mx/ws/1094AEV2/v2/soap.php/login'
+  };
+  const username = 'apiuser';
+  const password = 'a5b5e30dc3dcd0f3f5444baaf38448b1';
+  const xml = `<soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sgc="http://www.sgcweb.com.mx/sgcweb" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/">
+  <soapenv:Header/>
+  <soapenv:Body>
+     <sgc:login soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+        <user_auth xsi:type="sgc:user_auth">
+           <user_name xsi:type="xsd:string">${username}</user_name>
+           <password xsi:type="xsd:string">${password}</password>
+        </user_auth>
+        <application_name xsi:type="xsd:string">?</application_name>
+        <name_value_list xsi:type="sgc:name_value_list" SOAP-ENC:arrayType="sgc:name_value[]"/>
+     </sgc:login>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+  try {
+    const { response } = await soapRequest({ url: url, headers: headersTest, xml: xml, timeout: 10000 }); // Optional timeout parameter(milliseconds)
+    const { body } = response;
+    const parser = new DOMParser();
+    const responseXML = parser.parseFromString(body, 'text/xml');
+    const token = responseXML.getElementsByTagName('id')[0].textContent;
+    console.log(token);
+    return token;
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+app.post('/api/web/procesarPeticion', jsonParser, async (request, response) => {
+  // const { xml } = request.body.paquete;
+  const headers = {
+    'Content-Type': 'text/xml; charset=utf-8',
+    SOAPAction: 'http://testpotogas.sgcweb.com.mx/ws/1094AEV2/v2/soap.php/procesarPeticion'
+  };
+
+  const url = 'http://testpotogas.sgcweb.com.mx//ws/1094AEV2/v2/soap.php';
+  const token = await getToken();
+
+  if (token === '') return response.status(401).json({ error: 'No token' });
+
+  const xml = `<soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sgc="http://www.sgcweb.com.mx/sgcweb">
+  <soapenv:Header/>
+  <soapenv:Body>
+     <sgc:procesarPeticion soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+        <session xsi:type="xsd:string">${token}</session>
+        <modulo xsi:type="xsd:string">Clientes</modulo>
+        <accion xsi:type="xsd:string">registrar</accion>
+        <paquete xsi:type="xsd:string">{
+         "numero_cliente":"",
+     "identificador_externo":"0000321672",
+     "nombre":"ALEXIS PTG",
+     "rfc":"XAXX010101000",
+     "calle":"Héctor Hernández",
+     "no_exterior":"5639",
+     "no_interior":"302",
+     "colonia":"AGUA  REAL",
+     "localidad":"SAN LUIS POTOSI",
+     "referencia":"",
+     "ciudad":"SAN LUIS POTOSI",
+     "estado":"SAN LUIS POTOSI",
+     "codigo_postal":"31135",
+     "pais":"MEXICO",
+     "telefono1":"3319283746",
+     "telefono2":"",
+     "activo":"1",
+     "email":"antonio_ptg@test.com",
+     "saldo":"",
+     "politica_venta_id":"PV00001430615"
+   }</paquete>
+     </sgc:procesarPeticion>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+  try {
+    const { response } = await soapRequest({ url: url, headers: headers, xml: xml, timeout: 10000 }); // Optional timeout parameter(milliseconds)
+    const { body } = response;
+    const parser = new DOMParser();
+    const responseXML = parser.parseFromString(body, 'text/xml');
+    const token = responseXML.getElementsByTagName('id')[0].textContent;
+    console.log(token);
+    return token;
+  } catch (e) {
+    console.log(e);
+  }
+  // return response.status(201).json({
+  //   status: 'success',
+  //   message: 'Token generated successfully.',
+  //   token: token
+  // });
 });
 
 module.exports = app;
