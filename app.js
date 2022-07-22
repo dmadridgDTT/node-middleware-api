@@ -108,6 +108,14 @@ app.get('/api/probarConexion', (request, response) => {
         return response.status(401).json({ error: `No connection in the db: ${error}` });
       }
     });
+
+    connection.query('SELECT VERSION();', function (error, results, fields) {
+      if (error) {
+        return response.status(401).json({ error: error });
+      } else {
+        return response.json({ data: results });
+      }
+    });
   } catch (error) {
     return response.status(401).send({ response: `Error: ${error}` });
   }
