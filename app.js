@@ -42,7 +42,7 @@ app.get('/api/greeting', (request, response) => {
   response.status(200).json({ result: 'Hello World!' });
 });
 
-// TCP/IP Server: 10.2.111.27
+// TCP/IP Server: 10.2.111.13
 // Port: 3306
 // User: root
 // Password: ROOT
@@ -85,6 +85,31 @@ app.post('/api/getServicios', (request, response) => {
     });
   } catch (error) {
     return response.status(401).send({ response: error });
+  }
+});
+
+app.get('/api/probarConexion', (request, response) => {
+  const { host, user, password, db } = request.body;
+  const credentials = {
+    host: host,
+    port: 3306,
+    user: user,
+    password: password,
+    database: db,
+  };
+
+  try {
+    const validateCredentials = databaseConnection(credentials);
+    if (typeof (validateCredentials) === 'string') return response.status(401).json({ error: validateCredentials });
+
+    const connection = mysql.createConnection(credentials);
+    connection.connect(error => {
+      if (error) {
+        return response.status(401).json({ error: `No connection in the db: ${error}` });
+      }
+    });
+  } catch (error) {
+    return response.status(401).send({ response: `Error: ${error}` });
   }
 });
 
@@ -220,8 +245,13 @@ app.post('/api/syncServicios', (request, response) => {
       }
     });
 
+    const date = new Date();
+    // Today's date
+    const date = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 00:00:00`;
+
     servicios.forEach(servicio => {
-      connection.query('SELECT * FROM servicio WHERE id_Cliente = ?', [servicio.id_Cliente], function (error, results, fields) {
+      connection.query('SELECT * FROM ri505_servicio limit 1', [servicio.id_Cliente], function (error, results, fields) {
+        // connection.query('SELECT * FROM servicio WHERE id_Cliente = ?', [servicio.id_Cliente], function (error, results, fields) {
         if (error) return response.status(401).json({ error: error });
         if (results.length === 0) {
           console.log('Inserting servicio');
