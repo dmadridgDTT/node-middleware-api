@@ -11,7 +11,7 @@ const { DOMParser } = require('xmldom');
 
 const app = express();
 
-const mysql = require('mysql');
+const mysql = require('mysql2');
 // const res = require('express/lib/response');x
 
 // const connection = mysql.createConnection('mysql://user:pass@host/db?debug=true&charset=BIG5_CHINESE_CI&timezone=-0700');
@@ -230,9 +230,8 @@ app.post('/api/syncClientes', jsonParser, (request, response) => {
   }
 });
 
-app.post('/api/syncServicios', (request, response) => {
+app.post('/api/syncServicios', async (request, response) => {
   const { host, user, password, db } = request.body.credentials;
-  let servicios = [];
 
   const credentials = {
     host: host,
@@ -258,21 +257,17 @@ app.post('/api/syncServicios', (request, response) => {
     // Today's date
     // const date = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 00:00:00`;
 
-    connection.query('SELECT * FROM ri505_servicio limit 1', function (error, results, fields) {
-      if (error) return response.status(401).json({ error: error });
-      if (results.length !== 0) {
-        for (let i = 0; i < results.length; i++) {
-          servicios.push(results[i]);
-        }
-      } else {
-        return response.status(401).json({ error: 'No servicios to sync' });
-      }
-    });
+    const [rows, fields] = await connection.promise().query('SELECT * FROM ri505_servicio limit 1');
+
+    if (rows.length === 0) {
+      return response.status(401).json({ error: 'No servicios to sync' });
+    }
     connection.end();
+    // console.log(servicios);
     return response.status(201).json({
       status: 'success',
       message: 'Servicios traidos correctamente.',
-      servicios: servicios
+      servicios: rows
     });
   } catch (error) {
     return response.status(401).send({ response: `Error: ${error}` });
