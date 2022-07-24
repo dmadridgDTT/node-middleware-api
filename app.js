@@ -311,7 +311,6 @@ const getToken = async () => {
     const parser = new DOMParser();
     const responseXML = parser.parseFromString(body, 'text/xml');
     const token = responseXML.getElementsByTagName('id')[0].textContent;
-    console.log(token);
     return token;
   } catch (e) {
     console.log(e);
@@ -337,14 +336,14 @@ app.post('/api/web/procesarPeticion', jsonParser, async (request, response) => {
         <session xsi:type="xsd:string">${token}</session>
         <modulo xsi:type="xsd:string">${modulo}</modulo>
         <accion xsi:type="xsd:string">${accion}</accion>
-        <paquete xsi:type="xsd:string">${paquete}</paquete>
+        <paquete xsi:type="xsd:string">${JSON.stringify(paquete)}</paquete>
      </sgc:procesarPeticion>
   </soapenv:Body>
 </soapenv:Envelope>`;
 
   try {
-    const { response } = await soapRequest({ url: url, headers: headers, xml: xml, timeout: 10000 });
-    const { body } = response;
+    const { responseSoap } = await soapRequest({ url: url, headers: headers, xml: xml, timeout: 10000 });
+    const { body } = responseSoap;
     const parser = new DOMParser();
     const responseXML = parser.parseFromString(body, 'text/xml');
     const codigo = responseXML.getElementsByTagName('codigo')[0].textContent;
