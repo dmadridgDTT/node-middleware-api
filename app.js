@@ -32,7 +32,7 @@ function databaseConnection(credentials) {
 const jsonParser = bodyParser.json();
 
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: true }));
 // app.use('/', router);
 app.use('/', express.static(path.join(__dirname, 'public')));
 // Expose the license.html at http[s]://[host]:[port]/licences/licenses.html
@@ -317,7 +317,7 @@ const getToken = async () => {
   }
 };
 
-app.post('/api/web/procesarPeticion', jsonParser, async (request, response) => {
+app.post('/api/web/procesarPeticion', jsonParser, async (request, resp) => {
   const { modulo, accion, paquete } = request.body;
   const headers = {
     'Content-Type': 'text/xml; charset=utf-8',
@@ -327,7 +327,7 @@ app.post('/api/web/procesarPeticion', jsonParser, async (request, response) => {
   const url = 'http://testpotogas.sgcweb.com.mx//ws/1094AEV2/v2/soap.php';
   const token = await getToken();
 
-  if (token === '') return response.status(401).json({ error: 'No token' });
+  if (token === '') return resp.status(401).json({ error: 'No token' });
 
   const xml = `<soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sgc="http://www.sgcweb.com.mx/sgcweb">
   <soapenv:Header/>
@@ -342,22 +342,17 @@ app.post('/api/web/procesarPeticion', jsonParser, async (request, response) => {
 </soapenv:Envelope>`;
 
   try {
-    const { responseSoap } = await soapRequest({ url: url, headers: headers, xml: xml, timeout: 10000 });
-    const { body } = responseSoap;
+    const { response } = await soapRequest({ url: url, headers: headers, xml: xml, timeout: 10000 });
+    const { body } = response;
     const parser = new DOMParser();
     const responseXML = parser.parseFromString(body, 'text/xml');
     const codigo = responseXML.getElementsByTagName('codigo')[0].textContent;
-    const informacion = responseXML.getElementsByTagName('informacion')[0].textContent;
-
-    return response.status(200).json({ codigo, informacion });
+    const informacion = JSON.parse(responseXML.getElementsByTagName('informacion')[0].textContent);
+    return resp.status(200).json({ codigo, informacion });
   } catch (e) {
     console.log(e);
+    return resp.status(401).json({ error: 'Error procesando peticion', message: e });
   }
-  // return response.status(201).json({
-  //   status: 'success',
-  //   message: 'Token generated successfully.',
-  //   token: token
-  // });
 });
 
 module.exports = app;
