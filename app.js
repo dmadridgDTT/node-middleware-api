@@ -95,7 +95,7 @@ app.get('/api/probarConexion', (request, response) => {
     port: 3306,
     user: user,
     password: password,
-    database: db,
+    database: db
   };
 
   try {
@@ -109,7 +109,7 @@ app.get('/api/probarConexion', (request, response) => {
       }
     });
 
-    connection.query('SELECT VERSION();', function (error, results, fields) {
+    connection.query('SELECT VERSION();', function (error, results) {
       if (error) {
         return response.status(401).json({ error: error });
       } else {
@@ -253,9 +253,9 @@ app.post('/api/syncServicios', (request, response) => {
       }
     });
 
-    const date = new Date();
+    // const date = new Date();
     // Today's date
-    const date = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 00:00:00`;
+    // const date = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 00:00:00`;
 
     servicios.forEach(servicio => {
       connection.query('SELECT * FROM ri505_servicio limit 1', [servicio.id_Cliente], function (error, results, fields) {
@@ -324,7 +324,7 @@ const getToken = async () => {
 };
 
 app.post('/api/web/procesarPeticion', jsonParser, async (request, response) => {
-  // const { xml } = request.body.paquete;
+  const { modulo, accion, paquete } = request.body;
   const headers = {
     'Content-Type': 'text/xml; charset=utf-8',
     SOAPAction: 'http://testpotogas.sgcweb.com.mx/ws/1094AEV2/v2/soap.php/procesarPeticion'
@@ -340,42 +340,22 @@ app.post('/api/web/procesarPeticion', jsonParser, async (request, response) => {
   <soapenv:Body>
      <sgc:procesarPeticion soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
         <session xsi:type="xsd:string">${token}</session>
-        <modulo xsi:type="xsd:string">Clientes</modulo>
-        <accion xsi:type="xsd:string">registrar</accion>
-        <paquete xsi:type="xsd:string">{
-         "numero_cliente":"",
-     "identificador_externo":"0000321672",
-     "nombre":"ALEXIS PTG",
-     "rfc":"XAXX010101000",
-     "calle":"Héctor Hernández",
-     "no_exterior":"5639",
-     "no_interior":"302",
-     "colonia":"AGUA  REAL",
-     "localidad":"SAN LUIS POTOSI",
-     "referencia":"",
-     "ciudad":"SAN LUIS POTOSI",
-     "estado":"SAN LUIS POTOSI",
-     "codigo_postal":"31135",
-     "pais":"MEXICO",
-     "telefono1":"3319283746",
-     "telefono2":"",
-     "activo":"1",
-     "email":"antonio_ptg@test.com",
-     "saldo":"",
-     "politica_venta_id":"PV00001430615"
-   }</paquete>
+        <modulo xsi:type="xsd:string">${modulo}</modulo>
+        <accion xsi:type="xsd:string">${accion}</accion>
+        <paquete xsi:type="xsd:string">${paquete}</paquete>
      </sgc:procesarPeticion>
   </soapenv:Body>
 </soapenv:Envelope>`;
 
   try {
-    const { response } = await soapRequest({ url: url, headers: headers, xml: xml, timeout: 10000 }); // Optional timeout parameter(milliseconds)
+    const { response } = await soapRequest({ url: url, headers: headers, xml: xml, timeout: 10000 });
     const { body } = response;
     const parser = new DOMParser();
     const responseXML = parser.parseFromString(body, 'text/xml');
-    const token = responseXML.getElementsByTagName('id')[0].textContent;
-    console.log(token);
-    return token;
+    const codigo = responseXML.getElementsByTagName('codigo')[0].textContent;
+    const informacion = responseXML.getElementsByTagName('informacion')[0].textContent;
+
+    return response.status(200).json({ codigo, informacion });
   } catch (e) {
     console.log(e);
   }
