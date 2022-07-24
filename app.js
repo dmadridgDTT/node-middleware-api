@@ -88,7 +88,7 @@ app.post('/api/getServicios', (request, response) => {
   }
 });
 
-app.get('/api/probarConexion', (request, response) => {
+app.post('/api/probarConexion', (request, response) => {
   const { host, user, password, db } = request.body;
   const credentials = {
     host: host,
@@ -116,6 +116,7 @@ app.get('/api/probarConexion', (request, response) => {
         return response.json({ data: results });
       }
     });
+    connection.end();
   } catch (error) {
     return response.status(401).send({ response: `Error: ${error}` });
   }
@@ -154,6 +155,7 @@ app.post('/api/syncPrices', (request, response) => {
         }
       });
     });
+    connection.end();
 
     return response.status(201).json({
       status: 'success',
@@ -217,6 +219,7 @@ app.post('/api/syncClientes', jsonParser, (request, response) => {
         }
       });
     });
+    connection.end();
     return response.status(201).json({
       status: 'success',
       message: 'Clientes synced successfully.',
@@ -229,7 +232,7 @@ app.post('/api/syncClientes', jsonParser, (request, response) => {
 
 app.post('/api/syncServicios', (request, response) => {
   const { host, user, password, db } = request.body.credentials;
-  const servicios = JSON.parse(request.body.servicios);
+  let servicios = [];
 
   const credentials = {
     host: host,
@@ -239,8 +242,6 @@ app.post('/api/syncServicios', (request, response) => {
     database: db,
     connectTimeout: 10000
   };
-
-  if (servicios.length === 0) return response.status(401).json({ error: 'No servicios to sync' });
 
   try {
     const validateCredentials = databaseConnection(credentials);
@@ -257,27 +258,21 @@ app.post('/api/syncServicios', (request, response) => {
     // Today's date
     // const date = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 00:00:00`;
 
-    servicios.forEach(servicio => {
-      connection.query('SELECT * FROM ri505_servicio limit 1', [servicio.id_Cliente], function (error, results, fields) {
-        // connection.query('SELECT * FROM servicio WHERE id_Cliente = ?', [servicio.id_Cliente], function (error, results, fields) {
-        if (error) return response.status(401).json({ error: error });
-        if (results.length === 0) {
-          console.log('Inserting servicio');
-          connection.query('INSERT INTO servicio SET ?', servicio, function (error, results, fields) {
-            if (error) return response.status(401).json({ error: error.sqlMessage });
-          });
-        } else {
-          console.log('Updating servicio');
-          connection.query('UPDATE servicio SET ? WHERE id_Cliente = ?', [servicio, servicio.id_Cliente], function (error, results, fields) {
-            if (error) return response.status(401).json({ error: error.sqlMessage });
-          });
+    connection.query('SELECT * FROM ri505_servicio limit 1', function (error, results, fields) {
+      if (error) return response.status(401).json({ error: error });
+      if (results.length !== 0) {
+        for (let i = 0; i < results.length; i++) {
+          servicios.push(results[i]);
         }
-      });
+      } else {
+        return response.status(401).json({ error: 'No servicios to sync' });
+      }
     });
+    connection.end();
     return response.status(201).json({
       status: 'success',
-      message: 'Servicios synced successfully.',
-      servicios: servicios.length
+      message: 'Servicios traidos correctamente.',
+      servicios: servicios
     });
   } catch (error) {
     return response.status(401).send({ response: `Error: ${error}` });
