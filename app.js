@@ -265,7 +265,7 @@ app.post('/api/syncServicios', async (request, response) => {
     connection.end();
     // console.log(servicios);
     return response.status(201).json({
-      status: 'success',
+      status: true,
       message: 'Servicios traidos correctamente.',
       servicios: rows
     });
