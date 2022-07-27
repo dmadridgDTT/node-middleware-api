@@ -350,4 +350,533 @@ app.post('/api/web/procesarPeticion', jsonParser, async (request, resp) => {
   }
 });
 
+// SGC Carburación
+const getTokenCarburacion = async () => {
+  // Soap request for token generation
+  const url = 'http://testpotogas.sgcweb.com.mx//ws/1094AEV2/v2/soap.php';
+  const headersTest = {
+    'Content-Type': 'text/xml; charset=utf-8',
+    SOAPAction: 'http://testpotogas.sgcweb.com.mx/ws/1094AEV2/v2/soap.php/login'
+  };
+  const username = 'apiuser';
+  const password = 'a5b5e30dc3dcd0f3f5444baaf38448b1';
+  const xml = `<soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sgc="http://www.sgcweb.com.mx/sgcweb" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/">
+  <soapenv:Header/>
+  <soapenv:Body>
+     <sgc:login soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+        <user_auth xsi:type="sgc:user_auth">
+           <user_name xsi:type="xsd:string">${username}</user_name>
+           <password xsi:type="xsd:string">${password}</password>
+        </user_auth>
+        <application_name xsi:type="xsd:string">?</application_name>
+        <name_value_list xsi:type="sgc:name_value_list" SOAP-ENC:arrayType="sgc:name_value[]"/>
+     </sgc:login>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+  try {
+    const { response } = await soapRequest({ url: url, headers: headersTest, xml: xml, timeout: 10000 }); // Optional timeout parameter(milliseconds)
+    const { body } = response;
+    const parser = new DOMParser();
+    const responseXML = parser.parseFromString(body, 'text/xml');
+    const token = responseXML.getElementsByTagName('id')[0].textContent;
+    return token;
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+app.post('/api/carburacion/procesarPeticion', jsonParser, async (request, resp) => {
+  const { ip, folio, prueba } = request.body;
+  if (prueba) {
+    const services = [
+      {
+        servicio_id: '263C51C9-0757-E75A-6505-62E105121921',
+        folio: '19488',
+        folio_ticket: '16428',
+        inicio_servicio: '2022-07-27T14:28:00',
+        fin_servicio: '2022-07-27T14:28:31',
+        unidad_medida: 'Litro',
+        cantidad: '20.0000',
+        merma: '0',
+        producto: 'GLP',
+        dispensador: '1',
+        cliente: 'Publico en general',
+        identificador: 'Publico en general',
+        consumidor: 'Publico en general VPG',
+        vale_electronico: 'string" ',
+        vendedor: 'Despachador Usuario',
+        odometro: '0.0000',
+        valor_unitario: '12.1637',
+        subtotal: '243.2762',
+        impuesto: 'IVA',
+        tasa_impuesto: '16.0000',
+        importe_impuesto: '38.9238',
+        impuesto_extra: 'IEPS',
+        tasa_impuesto_extra: '0.0000',
+        importe_impuesto_extra: '0.0000',
+        precio_unitario_neto: '14.1100',
+        importe_total: '282.2000',
+        tipo_registro: 'Venta',
+        numero_impresiones: '2',
+        folio_dispensador: '391',
+        totalizador_inicial: '98292.9116',
+        totalizador_final: '98312.9116',
+        tipo_pago: 'Contado',
+        turno: 'Jefe automático - 12 febrero 07:03',
+        estacion: 'CAR00650',
+        cliente_id: '1',
+        consumidor_id: '1',
+        autoconsumo: '0',
+        identificador_externo_cliente: '',
+        identificador_externo_consumidor: ''
+      },
+      {
+        servicio_id: 'D51EC3B1-9045-7606-975D-62E10693AE28',
+        folio: '19489',
+        folio_ticket: '16429',
+        inicio_servicio: '2022-07-27T14:31:00',
+        fin_servicio: '2022-07-27T14:31:53',
+        unidad_medida: 'Litro',
+        cantidad: '42.0000',
+        merma: '0',
+        producto: 'GLP',
+        dispensador: '1',
+        cliente: 'Publico en general',
+        identificador: 'Publico en general',
+        consumidor: 'Publico en general VPG',
+        vale_electronico: 'string"',
+        vendedor: 'Despachador Usuario',
+        odometro: '0.0000',
+        valor_unitario: '12.1637',
+        subtotal: '510.8799',
+        impuesto: 'IVA',
+        tasa_impuesto: '16.0000',
+        importe_impuesto: '81.7401',
+        impuesto_extra: 'IEPS',
+        tasa_impuesto_extra: '0.0000',
+        importe_impuesto_extra: '0.0000',
+        precio_unitario_neto: '14.1100',
+        importe_total: '592.6200',
+        tipo_registro: 'Venta',
+        numero_impresiones: '2',
+        folio_dispensador: '392',
+        totalizador_inicial: '98312.9116',
+        totalizador_final: '98354.9116',
+        tipo_pago: 'Contado',
+        turno: 'Jefe automático - 12 febrero 07:03',
+        estacion: 'CAR00650',
+        cliente_id: '1',
+        consumidor_id: '1',
+        autoconsumo: '0',
+        identificador_externo_cliente: '',
+        identificador_externo_consumidor: ''
+      },
+      {
+        servicio_id: '74CE4DBE-64C8-A62C-B14E-62E10612A1C1',
+        folio: '19490',
+        folio_ticket: '16430',
+        inicio_servicio: '2022-07-27T14:33:00',
+        fin_servicio: '2022-07-27T14:34:02',
+        unidad_medida: 'Litro',
+        cantidad: '43.0000',
+        merma: '0',
+        producto: 'GLP',
+        dispensador: '1',
+        cliente: 'Publico en general',
+        identificador: 'Publico en general',
+        consumidor: 'Publico en general VPG',
+        vale_electronico: 'string"',
+        vendedor: 'Despachador Usuario',
+        odometro: '0.0000',
+        valor_unitario: '12.1637',
+        subtotal: '523.0437',
+        impuesto: 'IVA',
+        tasa_impuesto: '16.0000',
+        importe_impuesto: '83.6863',
+        impuesto_extra: 'IEPS',
+        tasa_impuesto_extra: '0.0000',
+        importe_impuesto_extra: '0.0000',
+        precio_unitario_neto: '14.1100',
+        importe_total: '606.7300',
+        tipo_registro: 'Venta',
+        numero_impresiones: '2',
+        folio_dispensador: '393',
+        totalizador_inicial: '98354.9116',
+        totalizador_final: '98397.9116',
+        tipo_pago: 'Contado',
+        turno: 'Jefe automático - 12 febrero 07:03',
+        estacion: 'CAR00650',
+        cliente_id: '1',
+        consumidor_id: '1',
+        autoconsumo: '0',
+        identificador_externo_cliente: '',
+        identificador_externo_consumidor: ''
+      },
+      {
+        servicio_id: 'E2CBA41E-E99E-6424-0DB5-62E10A74006C',
+        folio: '19491',
+        folio_ticket: '16431',
+        inicio_servicio: '2022-07-27T14:48:00',
+        fin_servicio: '2022-07-27T14:48:58',
+        unidad_medida: 'Litro',
+        cantidad: '18.0000',
+        merma: '0',
+        producto: 'GLP',
+        dispensador: '1',
+        cliente: 'Publico en general',
+        identificador: 'Publico en general',
+        consumidor: 'Publico en general VPG',
+        vale_electronico: 'string"',
+        vendedor: 'Despachador Usuario',
+        odometro: '0.0000',
+        valor_unitario: '12.1637',
+        subtotal: '218.9485',
+        impuesto: 'IVA',
+        tasa_impuesto: '16.0000',
+        importe_impuesto: '35.0315',
+        impuesto_extra: 'IEPS',
+        tasa_impuesto_extra: '0.0000',
+        importe_impuesto_extra: '0.0000',
+        precio_unitario_neto: '14.1100',
+        importe_total: '253.9800',
+        tipo_registro: 'Venta',
+        numero_impresiones: '2',
+        folio_dispensador: '394',
+        totalizador_inicial: '98397.9116',
+        totalizador_final: '98415.9116',
+        tipo_pago: 'Contado',
+        turno: 'Jefe automático - 12 febrero 07:03',
+        estacion: 'CAR00650',
+        cliente_id: '1',
+        consumidor_id: '1',
+        autoconsumo: '0',
+        identificador_externo_cliente: '',
+        identificador_externo_consumidor: ''
+      },
+      // {
+      //   servicio_id: '',
+      //   folio: '',
+      //   folio_ticket: '',
+      //   inicio_servicio: '',
+      //   fin_servicio: '',
+      //   unidad_medida: '',
+      //   cantidad: '',
+      //   merma: '',
+      //   producto: '',
+      //   dispensador: '',
+      //   cliente: '',
+      //   identificador: '',
+      //   consumidor: '',
+      //   vale_electronico: '',
+      //   vendedor: '',
+      //   odometro: '',
+      //   valor_unitario: '',
+      //   subtotal: '',
+      //   impuesto: '',
+      //   tasa_impuesto: '',
+      //   importe_impuesto: '',
+      //   impuesto_extra: '',
+      //   tasa_impuesto_extra: '',
+      //   importe_impuesto_extra: '',
+      //   precio_unitario_neto: '',
+      //   importe_total: '',
+      //   tipo_registro: '',
+      //   numero_impresiones: '',
+      //   folio_dispensador: '',
+      //   totalizador_inicial: '',
+      //   totalizador_final: '',
+      //   tipo_pago: '',
+      //   turno: '',
+      //   estacion: '',
+      //   cliente_id: '',
+      //   consumidor_id: '',
+      //   autoconsumo: '',
+      //   identificador_externo_cliente: '',
+      //   identificador_externo_consumidor: ''
+      // }
+      // {
+      //   servicio_id: '',
+      //   folio: '',
+      //   folio_ticket: '',
+      //   inicio_servicio: '',
+      //   fin_servicio: '',
+      //   unidad_medida: '',
+      //   cantidad: '',
+      //   merma: '',
+      //   producto: '',
+      //   dispensador: '',
+      //   cliente: '',
+      //   identificador: '',
+      //   consumidor: '',
+      //   vale_electronico: '',
+      //   vendedor: '',
+      //   odometro: '',
+      //   valor_unitario: '',
+      //   subtotal: '',
+      //   impuesto: '',
+      //   tasa_impuesto: '',
+      //   importe_impuesto: '',
+      //   impuesto_extra: '',
+      //   tasa_impuesto_extra: '',
+      //   importe_impuesto_extra: '',
+      //   precio_unitario_neto: '',
+      //   importe_total: '',
+      //   tipo_registro: '',
+      //   numero_impresiones: '',
+      //   folio_dispensador: '',
+      //   totalizador_inicial: '',
+      //   totalizador_final: '',
+      //   tipo_pago: '',
+      //   turno: '',
+      //   estacion: '',
+      //   cliente_id: '',
+      //   consumidor_id: '',
+      //   autoconsumo: '',
+      //   identificador_externo_cliente: '',
+      //   identificador_externo_consumidor: ''
+      // }
+      // {
+      //   servicio_id: '',
+      //   folio: '',
+      //   folio_ticket: '',
+      //   inicio_servicio: '',
+      //   fin_servicio: '',
+      //   unidad_medida: '',
+      //   cantidad: '',
+      //   merma: '',
+      //   producto: '',
+      //   dispensador: '',
+      //   cliente: '',
+      //   identificador: '',
+      //   consumidor: '',
+      //   vale_electronico: '',
+      //   vendedor: '',
+      //   odometro: '',
+      //   valor_unitario: '',
+      //   subtotal: '',
+      //   impuesto: '',
+      //   tasa_impuesto: '',
+      //   importe_impuesto: '',
+      //   impuesto_extra: '',
+      //   tasa_impuesto_extra: '',
+      //   importe_impuesto_extra: '',
+      //   precio_unitario_neto: '',
+      //   importe_total: '',
+      //   tipo_registro: '',
+      //   numero_impresiones: '',
+      //   folio_dispensador: '',
+      //   totalizador_inicial: '',
+      //   totalizador_final: '',
+      //   tipo_pago: '',
+      //   turno: '',
+      //   estacion: '',
+      //   cliente_id: '',
+      //   consumidor_id: '',
+      //   autoconsumo: '',
+      //   identificador_externo_cliente: '',
+      //   identificador_externo_consumidor: ''
+      // }
+      // {
+      //   servicio_id: '',
+      //   folio: '',
+      //   folio_ticket: '',
+      //   inicio_servicio: '',
+      //   fin_servicio: '',
+      //   unidad_medida: '',
+      //   cantidad: '',
+      //   merma: '',
+      //   producto: '',
+      //   dispensador: '',
+      //   cliente: '',
+      //   identificador: '',
+      //   consumidor: '',
+      //   vale_electronico: '',
+      //   vendedor: '',
+      //   odometro: '',
+      //   valor_unitario: '',
+      //   subtotal: '',
+      //   impuesto: '',
+      //   tasa_impuesto: '',
+      //   importe_impuesto: '',
+      //   impuesto_extra: '',
+      //   tasa_impuesto_extra: '',
+      //   importe_impuesto_extra: '',
+      //   precio_unitario_neto: '',
+      //   importe_total: '',
+      //   tipo_registro: '',
+      //   numero_impresiones: '',
+      //   folio_dispensador: '',
+      //   totalizador_inicial: '',
+      //   totalizador_final: '',
+      //   tipo_pago: '',
+      //   turno: '',
+      //   estacion: '',
+      //   cliente_id: '',
+      //   consumidor_id: '',
+      //   autoconsumo: '',
+      //   identificador_externo_cliente: '',
+      //   identificador_externo_consumidor: ''
+      // }
+      // {
+      //   servicio_id: '',
+      //   folio: '',
+      //   folio_ticket: '',
+      //   inicio_servicio: '',
+      //   fin_servicio: '',
+      //   unidad_medida: '',
+      //   cantidad: '',
+      //   merma: '',
+      //   producto: '',
+      //   dispensador: '',
+      //   cliente: '',
+      //   identificador: '',
+      //   consumidor: '',
+      //   vale_electronico: '',
+      //   vendedor: '',
+      //   odometro: '',
+      //   valor_unitario: '',
+      //   subtotal: '',
+      //   impuesto: '',
+      //   tasa_impuesto: '',
+      //   importe_impuesto: '',
+      //   impuesto_extra: '',
+      //   tasa_impuesto_extra: '',
+      //   importe_impuesto_extra: '',
+      //   precio_unitario_neto: '',
+      //   importe_total: '',
+      //   tipo_registro: '',
+      //   numero_impresiones: '',
+      //   folio_dispensador: '',
+      //   totalizador_inicial: '',
+      //   totalizador_final: '',
+      //   tipo_pago: '',
+      //   turno: '',
+      //   estacion: '',
+      //   cliente_id: '',
+      //   consumidor_id: '',
+      //   autoconsumo: '',
+      //   identificador_externo_cliente: '',
+      //   identificador_externo_consumidor: ''
+      // }
+      // {
+      //   servicio_id: '',
+      //   folio: '',
+      //   folio_ticket: '',
+      //   inicio_servicio: '',
+      //   fin_servicio: '',
+      //   unidad_medida: '',
+      //   cantidad: '',
+      //   merma: '',
+      //   producto: '',
+      //   dispensador: '',
+      //   cliente: '',
+      //   identificador: '',
+      //   consumidor: '',
+      //   vale_electronico: '',
+      //   vendedor: '',
+      //   odometro: '',
+      //   valor_unitario: '',
+      //   subtotal: '',
+      //   impuesto: '',
+      //   tasa_impuesto: '',
+      //   importe_impuesto: '',
+      //   impuesto_extra: '',
+      //   tasa_impuesto_extra: '',
+      //   importe_impuesto_extra: '',
+      //   precio_unitario_neto: '',
+      //   importe_total: '',
+      //   tipo_registro: '',
+      //   numero_impresiones: '',
+      //   folio_dispensador: '',
+      //   totalizador_inicial: '',
+      //   totalizador_final: '',
+      //   tipo_pago: '',
+      //   turno: '',
+      //   estacion: '',
+      //   cliente_id: '',
+      //   consumidor_id: '',
+      //   autoconsumo: '',
+      //   identificador_externo_cliente: '',
+      //   identificador_externo_consumidor: ''
+      // }
+      // {
+      //   servicio_id: '',
+      //   folio: '',
+      //   folio_ticket: '',
+      //   inicio_servicio: '',
+      //   fin_servicio: '',
+      //   unidad_medida: '',
+      //   cantidad: '',
+      //   merma: '',
+      //   producto: '',
+      //   dispensador: '',
+      //   cliente: '',
+      //   identificador: '',
+      //   consumidor: '',
+      //   vale_electronico: '',
+      //   vendedor: '',
+      //   odometro: '',
+      //   valor_unitario: '',
+      //   subtotal: '',
+      //   impuesto: '',
+      //   tasa_impuesto: '',
+      //   importe_impuesto: '',
+      //   impuesto_extra: '',
+      //   tasa_impuesto_extra: '',
+      //   importe_impuesto_extra: '',
+      //   precio_unitario_neto: '',
+      //   importe_total: '',
+      //   tipo_registro: '',
+      //   numero_impresiones: '',
+      //   folio_dispensador: '',
+      //   totalizador_inicial: '',
+      //   totalizador_final: '',
+      //   tipo_pago: '',
+      //   turno: '',
+      //   estacion: '',
+      //   cliente_id: '',
+      //   consumidor_id: '',
+      //   autoconsumo: '',
+      //   identificador_externo_cliente: '',
+      //   identificador_externo_consumidor: ''
+      // }
+    ];
+    return resp.json(services);
+  } else {
+    const headers = {
+      'Content-Type': 'text/xml; charset=utf-8',
+      SOAPAction: 'http://testpotogas.sgcweb.com.mx/ws/1094AEV2/v2/soap.php/procesarPeticion'
+    };
+
+    const url = 'http://testpotogas.sgcweb.com.mx//ws/1094AEV2/v2/soap.php';
+    const token = await getToken();
+
+    if (token === '') return resp.status(401).json({ error: 'No token' });
+
+    const xml = `<soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sgc="http://www.sgcweb.com.mx/sgcweb">
+    <soapenv:Header/>
+    <soapenv:Body>
+       <sgc:procesarPeticion soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+          <session xsi:type="xsd:string">${token}</session>
+          <modulo xsi:type="xsd:string">${folio}</modulo>
+       </sgc:procesarPeticion>
+    </soapenv:Body>
+  </soapenv:Envelope>`;
+
+    try {
+      const { response } = await soapRequest({ url: url, headers: headers, xml: xml, timeout: 10000 });
+      const { body } = response;
+      const parser = new DOMParser();
+      const responseXML = parser.parseFromString(body, 'text/xml');
+      const codigo = responseXML.getElementsByTagName('codigo')[0].textContent;
+      const informacion = JSON.parse(responseXML.getElementsByTagName('informacion')[0].textContent);
+      return resp.status(200).json({ codigo, informacion });
+    } catch (e) {
+      console.log(e);
+      return resp.status(401).json({ error: 'Error procesando peticion', message: e });
+    }
+  }
+});
+
 module.exports = app;
