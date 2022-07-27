@@ -1,6 +1,7 @@
+/* eslint-disable indent */
 /* eslint-disable space-before-function-paren */
 'use strict';
-
+const util = require('util');
 const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -11,6 +12,7 @@ const { DOMParser } = require('xmldom');
 
 const app = express();
 
+// const mysql = require('mysql');
 const mysql = require('mysql2');
 // const res = require('express/lib/response');x
 
@@ -167,7 +169,7 @@ app.post('/api/syncPrices', (request, response) => {
   }
 });
 
-app.post('/api/syncClientes', jsonParser, (request, response) => {
+app.post('/api/syncClientes', jsonParser, async (request, response) => {
   if (!request.body) return response.sendStatus(400);
 
   if (!request.body.credentials) {
@@ -196,34 +198,42 @@ app.post('/api/syncClientes', jsonParser, (request, response) => {
     const validateCredentials = databaseConnection(credentials);
     if (typeof (validateCredentials) === 'string') return response.status(401).json({ error: validateCredentials });
 
-    const connection = mysql.createConnection(credentials);
-    connection.connect(error => {
-      if (error) {
-        return response.status(401).json({ error: `No connection in the db: ${error}` });
-      }
+    const conn = mysql.createConnection({
+      host: host,
+      user: user,
+      password: password,
+      database: db,
+      connectTimeout: 10000
     });
+    console.log('Connecting to the db...');
+    const query = util.promisify(conn.query).bind(conn);
+    let rowsArray = [];
+    clientes.forEach(async cliente => {
+      const rows = await query('SELECT * FROM cliente WHERE cuenta = ?', [cliente.cuenta]);
 
-    clientes.forEach(cliente => {
-      connection.query('SELECT * FROM cliente WHERE id_Cliente = ?', [cliente.id_Cliente], function (error, results, fields) {
-        if (error) return response.status(401).json({ error: error });
-        if (results.length === 0) {
-          console.log('Inserting cliente');
-          connection.query('INSERT INTO cliente SET ?', cliente, function (error, results, fields) {
-            if (error) return response.status(401).json({ error: error.sqlMessage });
-          });
-        } else {
-          console.log('Updating cliente');
-          connection.query('UPDATE cliente SET ? WHERE id_Cliente = ?', [cliente, cliente.id_Cliente], function (error, results, fields) {
-            if (error) return response.status(401).json({ error: error.sqlMessage });
-          });
-        }
-      });
-    });
-    connection.end();
-    return response.status(201).json({
-      status: 'success',
-      message: 'Clientes synced successfully.',
-      clientes: clientes.length
+      if (rows.length === 0) {
+        // Insertar cliente
+        const insertCliente = await query('INSERT INTO cliente SET ?', cliente);
+        console.log(`Cliente ${cliente.cuenta} created successfully`);
+        console.log(insertCliente);
+        rowsArray.push({ data: cliente, action: 'inserted' });
+      } else {
+        // Actualizar cliente
+        const updateCliente = await query('UPDATE cliente SET ? WHERE cuenta = ?', [cliente, cliente.cuenta]);
+        console.log(`Cliente ${cliente.cuenta} updated successfully`);
+        console.log(updateCliente);
+        rowsArray.push({ data: cliente, action: 'updated' });
+      }
+
+      if (clientes.indexOf(cliente) === clientes.length - 1) {
+        conn.end();
+        return response.status(201).json({
+          status: (rowsArray.length === 0) ? 'false' : 'true',
+          message: (rowsArray.length === 0) ? 'Errors while syncing clientes.' : 'Clientes synced successfully.',
+          clientes: rowsArray,
+          errors: []
+        });
+      }
     });
   } catch (error) {
     return response.status(401).send({ response: `Error: ${error}` });
@@ -246,24 +256,25 @@ app.post('/api/syncServicios', async (request, response) => {
     const validateCredentials = databaseConnection(credentials);
     if (typeof (validateCredentials) === 'string') return response.status(401).json({ error: validateCredentials });
 
-    const connection = mysql.createConnection(credentials);
-    connection.connect(error => {
-      if (error) {
-        return response.status(401).json({ error: `No connection in the db: ${error}` });
-      }
-    });
-
     // const date = new Date();
     // Today's date
     // const date = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 00:00:00`;
 
-    const [rows, fields] = await connection.promise().query('SELECT * FROM ri505_servicio limit 1');
+    const conn = await mysql.createConnection({
+      host: host,
+      user: user,
+      password: password,
+      database: db,
+      connectTimeout: 10000
+    });
+    console.log('Connecting to the db...');
 
-    if (rows.length === 0) {
-      return response.status(401).json({ error: 'No servicios to sync' });
-    }
-    connection.end();
-    // console.log(servicios);
+    const query = util.promisify(conn.query).bind(conn);
+
+    const rows = await query('SELECT * FROM ri505_servicio limit 1');
+    console.log(rows);
+    conn.end();
+
     return response.status(201).json({
       status: true,
       message: 'Servicios traidos correctamente.',

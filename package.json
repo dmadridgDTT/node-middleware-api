@@ -15,7 +15,8 @@
     "release": "standard-version -a",
     "openshift": "nodeshift --dockerImage=registry.access.redhat.com/ubi8/nodejs-14",
     "postinstall": "license-reporter report -s && license-reporter save -s --xml licenses.xml",
-    "start": "node ."
+    "start": "node .",
+    "dev": "nodemon ."
   },
   "main": "./bin/www",
   "standard-version": {
@@ -50,6 +51,7 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.1.0",
     "js-yaml": "^3.13.1",
+    "nodemon": "^2.0.19",
     "nodeshift": "~6.2.0",
     "nyc": "~14.1.1",
     "rhoaster": "^0.4.1",
