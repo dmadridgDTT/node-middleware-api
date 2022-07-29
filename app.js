@@ -168,15 +168,15 @@ app.post('/api/syncPrices', (request, response) => {
 
       if (rows.length === 0) {
         // Insertar cliente
-        const insertPrecio = await query('INSERT INTO cliente SET ?', precio);
+        const insertPrecio = await query('INSERT INTO ri505_precio SET ?', precio);
         console.log(`Precio ${precio.id_precio} created successfully`);
-        console.log(insertPrecio);
+        // console.log(insertPrecio);
         rowsArray.push({ data: precio, action: 'inserted' });
       } else {
         // Actualizar precio
-        const updatePrecio = await query('UPDATE precio SET ? WHERE id_precio = ?', [precio, precio.id_precio]);
+        const updatePrecio = await query('UPDATE ri505_precio SET ? WHERE id_precio = ?', [precio, precio.id_precio]);
         console.log(`Precio ${precio.id_precio} updated successfully`);
-        console.log(updatePrecio);
+        // console.log(updatePrecio);
         rowsArray.push({ data: precio, action: 'updated' });
       }
 
@@ -241,13 +241,13 @@ app.post('/api/syncClientes', jsonParser, async (request, response) => {
         // Insertar cliente
         const insertCliente = await query('INSERT INTO cliente SET ?', cliente);
         console.log(`Cliente ${cliente.cuenta} created successfully`);
-        console.log(insertCliente);
+        // console.log(insertCliente);
         rowsArray.push({ data: cliente, action: 'inserted' });
       } else {
         // Actualizar cliente
         const updateCliente = await query('UPDATE cliente SET ? WHERE cuenta = ?', [cliente, cliente.cuenta]);
         console.log(`Cliente ${cliente.cuenta} updated successfully`);
-        console.log(updateCliente);
+        // console.log(updateCliente);
         rowsArray.push({ data: cliente, action: 'updated' });
       }
 
