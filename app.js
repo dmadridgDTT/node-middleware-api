@@ -125,8 +125,18 @@ app.post('/api/probarConexion', (request, response) => {
 });
 
 app.post('/api/syncPrices', (request, response) => {
+  if (!request.body) return response.sendStatus(400);
+
+  if (!request.body.credentials) {
+    return response.status(401).json({ error: 'No credentials' });
+  }
+
+  if (!request.body.precios && request.body.precios.length === 0) {
+    return response.status(401).json({ error: 'No precios to sync' });
+  }
+
   const { host, user, password, db } = request.body.credentials;
-  const prices = JSON.parse(request.body.prices);
+  const precios = request.body.precios;
 
   const credentials = {
     host: host,
@@ -137,32 +147,48 @@ app.post('/api/syncPrices', (request, response) => {
     connectTimeout: 10000
   };
 
-  if (prices.length === 0) return response.status(401).json({ error: 'No prices to sync' });
+  if (precios.length === 0) return response.status(401).json({ error: 'No precios to sync' });
 
   try {
     const validateCredentials = databaseConnection(credentials);
     if (typeof (validateCredentials) === 'string') return response.status(401).json({ error: validateCredentials });
 
-    const connection = mysql.createConnection(credentials);
-    connection.connect(error => {
-      if (error) {
-        return response.status(401).json({ error: `No connection in the db: ${error}` });
+    const conn = mysql.createConnection({
+      host: host,
+      user: user,
+      password: password,
+      database: db,
+      connectTimeout: 10000
+    });
+    console.log('Connecting to the db...');
+    const query = util.promisify(conn.query).bind(conn);
+    let rowsArray = [];
+    precios.forEach(async precio => {
+      const rows = await query('SELECT * FROM ri505_precio WHERE id_precio = ?', [precio.id_precio]);
+
+      if (rows.length === 0) {
+        // Insertar cliente
+        const insertPrecio = await query('INSERT INTO cliente SET ?', precio);
+        console.log(`Precio ${precio.id_precio} created successfully`);
+        console.log(insertPrecio);
+        rowsArray.push({ data: precio, action: 'inserted' });
+      } else {
+        // Actualizar precio
+        const updatePrecio = await query('UPDATE precio SET ? WHERE id_precio = ?', [precio, precio.id_precio]);
+        console.log(`Precio ${precio.id_precio} updated successfully`);
+        console.log(updatePrecio);
+        rowsArray.push({ data: precio, action: 'updated' });
       }
-    });
 
-    prices.forEach(price => {
-      connection.query(`UPDATE ri505_precio SET precio = ${price.precio} WHERE id_precio = '${price.id_precio}'`, function (error, results, fields) {
-        if (error) {
-          return response.status(401).json({ error: error });
-        }
-      });
-    });
-    connection.end();
-
-    return response.status(201).json({
-      status: 'success',
-      message: 'Prices synced successfully.',
-      prices: prices.length
+      if (precios.indexOf(precio) === precios.length - 1) {
+        conn.end();
+        return response.status(201).json({
+          status: (rowsArray.length === 0) ? 'false' : 'true',
+          message: (rowsArray.length === 0) ? 'Errors while syncing precios.' : 'Precios synced successfully.',
+          precios: rowsArray,
+          errors: []
+        });
+      }
     });
   } catch (error) {
     return response.status(401).send({ response: `Error: ${error}` });
