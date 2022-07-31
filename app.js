@@ -268,6 +268,7 @@ app.post('/api/syncClientes', jsonParser, async (request, response) => {
 
 app.post('/api/syncServicios', async (request, response) => {
   const { host, user, password, db } = request.body.credentials;
+  const oportunidades = request.body.oportunidades;
 
   const credentials = {
     host: host,
@@ -297,14 +298,26 @@ app.post('/api/syncServicios', async (request, response) => {
 
     const query = util.promisify(conn.query).bind(conn);
 
-    const rows = await query('SELECT * FROM ri505_servicio limit 1');
-    console.log(rows);
-    conn.end();
+    oportunidades.forEach(async service => {
+      // console.log(service);
+      service.found = false;
+      const rows = await query('SELECT * FROM ri505_servicio WHERE id_Cliente = ? AND num_ruta = ?', [service.id_Cliente, service.num_ruta]);
+      if (rows.length !== 0) {
+        service.found = true;
+        service.folio = rows[0].consecutivo;
+        service.ts1 = rows[0].ts1;
+        service.volumen = rows[0].volumen;
+        service.precio_str = rows[0].precio_str;
+      }
 
-    return response.status(201).json({
-      status: true,
-      message: 'Servicios traidos correctamente.',
-      servicios: rows
+      if (oportunidades.indexOf(service) === oportunidades.length - 1) {
+        conn.end();
+        return response.status(201).json({
+          status: true,
+          message: 'Servicios traidos correctamente.',
+          servicios: oportunidades
+        });
+      }
     });
   } catch (error) {
     return response.status(401).send({ response: `Error: ${error}` });
