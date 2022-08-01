@@ -50,45 +50,45 @@ app.get('/api/greeting', (request, response) => {
 // Password: ROOT
 // Database: sgc
 
-app.post('/api/getServicios', (request, response) => {
-  if (!request.body) return response.sendStatus(400);
+// app.post('/api/getServicios', (request, response) => {
+//   if (!request.body) return response.sendStatus(400);
 
-  if (!request.body.credentials) {
-    return response.status(401).json({ error: 'No credentials' });
-  }
+//   if (!request.body.credentials) {
+//     return response.status(401).json({ error: 'No credentials' });
+//   }
 
-  const { host, user, password, db } = request.body.credentials;
+//   const { host, user, password, db } = request.body.credentials;
 
-  const credentials = {
-    host: host,
-    port: 3306,
-    user: user,
-    password: password,
-    database: db,
-    connectTimeout: 10000
-  };
+//   const credentials = {
+//     host: host,
+//     port: 3306,
+//     user: user,
+//     password: password,
+//     database: db,
+//     connectTimeout: 10000
+//   };
 
-  try {
-    const validateCredentials = databaseConnection(credentials);
-    if (typeof (validateCredentials) === 'string') return response.status(401).json({ error: validateCredentials });
+//   try {
+//     const validateCredentials = databaseConnection(credentials);
+//     if (typeof (validateCredentials) === 'string') return response.status(401).json({ error: validateCredentials });
 
-    const connection = mysql.createConnection(credentials);
-    connection.connect(error => {
-      if (error) return response.status(401).json({ error: `No connection in the db: ${error}` });
-    });
+//     const connection = mysql.createConnection(credentials);
+//     connection.connect(error => {
+//       if (error) return response.status(401).json({ error: `No connection in the db: ${error}` });
+//     });
 
-    // connection.query('SELECT VERSION();', function (error, results, fields) {
-    connection.query('SELECT serv.id_autotanque, serv.consecutivo2, serv.ts1, serv.volumen, cliente.cuenta, cliente.id_precio, serv.precio_str FROM ri505_servicio serv INNER JOIN cliente ON serv.id_Cliente = cliente.id_Cliente', function (error, results, fields) {
-      if (error) {
-        return response.status(401).json({ error: error });
-      } else {
-        return response.json({ data: results });
-      }
-    });
-  } catch (error) {
-    return response.status(401).send({ response: error });
-  }
-});
+//     // connection.query('SELECT VERSION();', function (error, results, fields) {
+//     connection.query('SELECT serv.id_autotanque, serv.consecutivo2, serv.ts1, serv.volumen, cliente.cuenta, cliente.id_precio, serv.precio_str FROM ri505_servicio serv INNER JOIN cliente ON serv.id_Cliente = cliente.id_Cliente', function (error, results, fields) {
+//       if (error) {
+//         return response.status(401).json({ error: error });
+//       } else {
+//         return response.json({ data: results });
+//       }
+//     });
+//   } catch (error) {
+//     return response.status(401).send({ response: error });
+//   }
+// });
 
 app.post('/api/probarConexion', (request, response) => {
   const { host, user, password, db } = request.body;
@@ -266,8 +266,56 @@ app.post('/api/syncClientes', jsonParser, async (request, response) => {
   }
 });
 
+app.post('/api/getServicios', async (request, response) => {
+  const { host, user, password, db } = request.body.credentials;
+  const folio = request.body.folio;
+  // const oportunidades = request.body.oportunidades;
+
+  const credentials = {
+    host: host,
+    port: 3306,
+    user: user,
+    password: password,
+    database: db,
+    connectTimeout: 10000
+  };
+
+  try {
+    const validateCredentials = databaseConnection(credentials);
+    if (typeof (validateCredentials) === 'string') return response.status(401).json({ error: validateCredentials });
+
+    // const date = new Date();
+    // Today's date
+    // const date = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 00:00:00`;
+
+    const conn = await mysql.createConnection({
+      host: host,
+      user: user,
+      password: password,
+      database: db,
+      connectTimeout: 10000
+    });
+    console.log('Connecting to the db...');
+    console.log(`Folio: ${folio} - Folio+100: ${parseInt(folio) + 100}`);
+    const query = util.promisify(conn.query).bind(conn);
+    const rows = await query('SELECT * FROM ri505_servicio WHERE consecutivo between ? and ?', [folio, parseInt(folio) + 100]);
+    const lastFolio = parseInt(folio) + rows.length;
+
+    conn.end();
+    return response.status(201).json({
+      status: true,
+      message: 'Servicios traidos correctamente.',
+      servicios: rows,
+      nextFolio: lastFolio + 1
+    });
+  } catch (error) {
+    return response.status(401).send({ response: `Error: ${error}` });
+  }
+});
+
 app.post('/api/syncServicios', async (request, response) => {
   const { host, user, password, db } = request.body.credentials;
+  // const folio = request.body.folio;
   const oportunidades = request.body.oportunidades;
 
   const credentials = {
