@@ -296,17 +296,15 @@ app.post('/api/getServicios', async (request, response) => {
       connectTimeout: 10000
     });
     console.log('Connecting to the db...');
-    console.log(`Folio: ${folio} - Folio+100: ${parseInt(folio) + 100}`);
+    console.log(`Folio: ${parseInt(folio) + 1} - Folio+100: ${parseInt(folio) + 100}`);
     const query = util.promisify(conn.query).bind(conn);
-    const rows = await query('SELECT * FROM ri505_servicio WHERE consecutivo between ? and ?', [folio, parseInt(folio) + 100]);
-    const lastFolio = parseInt(folio) + rows.length;
+    const rows = await query('SELECT * FROM ri505_servicio WHERE consecutivo between ? and ?', [parseInt(folio) + 1, parseInt(folio) + 100]);
 
     conn.end();
     return response.status(201).json({
       status: true,
       message: 'Servicios traidos correctamente.',
-      servicios: rows,
-      nextFolio: lastFolio + 1
+      servicios: rows
     });
   } catch (error) {
     return response.status(401).send({ response: `Error: ${error}` });
