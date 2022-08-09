@@ -12,8 +12,8 @@ const { DOMParser } = require('xmldom');
 
 const app = express();
 
-// const mysql = require('mysql');
-const mysql = require('mysql2');
+const mysql = require('mysql');
+// const mysql = require('mysql2');
 // const res = require('express/lib/response');x
 
 // const connection = mysql.createConnection('mysql://user:pass@host/db?debug=true&charset=BIG5_CHINESE_CI&timezone=-0700');
@@ -288,7 +288,7 @@ app.post('/api/getServicios', async (request, response) => {
     // Today's date
     // const date = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 00:00:00`;
 
-    const conn = await mysql.createConnection({
+    const conn = mysql.createConnection({
       host: host,
       user: user,
       password: password,
@@ -297,8 +297,9 @@ app.post('/api/getServicios', async (request, response) => {
     });
     console.log('Connecting to the db...');
     console.log(`Folio: ${parseInt(folio) + 1} - Folio+100: ${parseInt(folio) + 100}`);
+
     const query = util.promisify(conn.query).bind(conn);
-    const rows = await query('SELECT * FROM ri505_servicio WHERE consecutivo between ? and ?', [parseInt(folio) + 1, parseInt(folio) + 100]);
+    const rows = await query('SELECT * FROM ri505_servicio WHERE id_servicio between ? and ?', [parseInt(folio) + 1, parseInt(folio) + 100]);
 
     conn.end();
     return response.status(201).json({
@@ -438,8 +439,12 @@ app.post('/api/web/procesarPeticion', jsonParser, async (request, resp) => {
     const parser = new DOMParser();
     const responseXML = parser.parseFromString(body, 'text/xml');
     const codigo = responseXML.getElementsByTagName('codigo')[0].textContent;
-    const informacion = JSON.parse(responseXML.getElementsByTagName('informacion')[0].textContent);
-    return resp.status(200).json({ codigo, informacion });
+    if (codigo === '0000' || codigo === '1111') {
+      const informacion = JSON.parse(responseXML.getElementsByTagName('informacion')[0].textContent);
+      return resp.status(200).json({ codigo, informacion });
+    } else {
+      return resp.status(200).json({ error: 'Error', codigo: codigo });
+    }
   } catch (e) {
     console.log(e);
     return resp.status(401).json({ error: 'Error procesando peticion', message: e });
