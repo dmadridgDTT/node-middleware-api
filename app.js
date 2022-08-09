@@ -284,10 +284,6 @@ app.post('/api/getServicios', async (request, response) => {
     const validateCredentials = databaseConnection(credentials);
     if (typeof (validateCredentials) === 'string') return response.status(401).json({ error: validateCredentials });
 
-    // const date = new Date();
-    // Today's date
-    // const date = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 00:00:00`;
-
     const conn = mysql.createConnection({
       host: host,
       user: user,
