@@ -8,14 +8,13 @@ const bodyParser = require('body-parser');
 
 const soapRequest = require('easy-soap-request');
 const { DOMParser } = require('xmldom');
-const ping = require('ping');
 // const fs = require('fs');
 
 const app = express();
 
 const mysql = require('mysql');
 // const mysql = require('mysql2');
-// const res = require('express/lib/response');x
+// const res = require('express/lib/response');
 
 // const connection = mysql.createConnection('mysql://user:pass@host/db?debug=true&charset=BIG5_CHINESE_CI&timezone=-0700');
 
@@ -104,13 +103,6 @@ app.post('/api/probarConexion', async (request, response) => {
   try {
     const validateCredentials = databaseConnection(credentials);
     if (typeof (validateCredentials) === 'string') return response.status(401).json({ error: validateCredentials });
-
-    const result = await ping.promise.probe(host, {
-      timeout: 10,
-      extra: ['-i', '2']
-    });
-
-    console.log(result);
 
     const connection = mysql.createConnection(credentials);
     connection.connect(error => {
