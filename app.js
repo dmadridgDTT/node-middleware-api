@@ -8,6 +8,7 @@ const bodyParser = require('body-parser');
 
 const soapRequest = require('easy-soap-request');
 const { DOMParser } = require('xmldom');
+const ping = require('ping');
 // const fs = require('fs');
 
 const app = express();
@@ -90,7 +91,7 @@ app.get('/api/greeting', (request, response) => {
 //   }
 // });
 
-app.post('/api/probarConexion', (request, response) => {
+app.post('/api/probarConexion', async (request, response) => {
   const { host, user, password, db } = request.body;
   const credentials = {
     host: host,
@@ -104,10 +105,17 @@ app.post('/api/probarConexion', (request, response) => {
     const validateCredentials = databaseConnection(credentials);
     if (typeof (validateCredentials) === 'string') return response.status(401).json({ error: validateCredentials });
 
+    const result = await ping.promise.probe(host, {
+      timeout: 10,
+      extra: ['-i', '2']
+    });
+
+    console.log(result);
+
     const connection = mysql.createConnection(credentials);
     connection.connect(error => {
       if (error) {
-        return response.status(401).json({ error: `No connection in the db: ${error}` });
+        return response.status(401).json({ error: `No connection in the db: ${error}`, result });
       }
     });
 
