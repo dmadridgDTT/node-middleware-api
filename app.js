@@ -90,7 +90,7 @@ app.get('/api/greeting', (request, response) => {
 //   }
 // });
 
-app.post('/api/probarConexion', async (request, response) => {
+app.post('/api/probarConexion', (request, response) => {
   const { host, user, password, db } = request.body;
   const credentials = {
     host: host,
@@ -107,7 +107,7 @@ app.post('/api/probarConexion', async (request, response) => {
     const connection = mysql.createConnection(credentials);
     connection.connect(error => {
       if (error) {
-        return response.status(401).json({ error: `No connection in the db: ${error}`, result });
+        return response.status(401).json({ error: `No connection in the db: ${error}` });
       }
     });
 
