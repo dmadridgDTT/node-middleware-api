@@ -450,7 +450,7 @@ app.post('/api/web/procesarPeticion', jsonParser, async (request, resp) => {
     SOAPAction: 'http://potogas.sgcweb.com.mx/ws/1094AEV2/v2/soap.php/procesarPeticion'
   };
 
-  const url = 'http://potogas.sgcweb.com.mx/ws/1094AEV2/v2/soap.php?wsdl';
+  const url = 'http://potogas.sgcweb.com.mx/ws/1094AEV2/v2/soap.php';
   const token = await getProductionToken();
 
   if (token === '') return resp.status(401).json({ error: 'No token' });
@@ -472,6 +472,7 @@ app.post('/api/web/procesarPeticion', jsonParser, async (request, resp) => {
     const { body } = response;
     const parser = new DOMParser();
     const responseXML = parser.parseFromString(body, 'text/xml');
+
     const codigo = responseXML.getElementsByTagName('codigo')[0].textContent;
     if (codigo === '0000' || codigo === '1111') {
       const informacion = JSON.parse(responseXML.getElementsByTagName('informacion')[0].textContent);
