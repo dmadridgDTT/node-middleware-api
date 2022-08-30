@@ -280,7 +280,6 @@ app.post('/api/getServicios', async (request, response) => {
       connectTimeout: 10000
     });
     console.log('Connecting to the db...');
-    // console.log(`Folio: ${parseInt(folio) + 1} - Folio+100: ${parseInt(folio) + 100}`);
 
     const query = util.promisify(conn.query).bind(conn);
     const rows = await query('SELECT LPAD(cliente.cuenta, 10, "0") AS id_client, cliente.cuenta, ri505_servicio.*, autotanques.no_autotanque FROM ri505_servicio inner join autotanques ON ri505_servicio.id_autotanque = autotanques.id_autotanque inner join cliente ON ri505_servicio.id_Cliente = cliente.id_Cliente where autotanques.no_autotanque = 4802 AND ts1 BETWEEN "2022-08-17 00:00:00" and "2022-08-17 23:59:59"');
@@ -334,7 +333,7 @@ const getToken = async () => {
 </soapenv:Envelope>`;
 
   try {
-    const { response } = await soapRequest({ url: url, headers: headersTest, xml: xml, timeout: 10000 }); // Optional timeout parameter(milliseconds)
+    const { response } = await soapRequest({ url: url, headers: headersTest, xml: xml }); // Optional timeout parameter(milliseconds)
     const { body } = response;
     const parser = new DOMParser();
     const responseXML = parser.parseFromString(body, 'text/xml');
@@ -370,7 +369,7 @@ app.post('/api/web/sb_procesarPeticion', jsonParser, async (request, resp) => {
 </soapenv:Envelope>`;
 
   try {
-    const { response } = await soapRequest({ url: url, headers: headers, xml: xml, timeout: 10000 });
+    const { response } = await soapRequest({ url: url, headers: headers, xml: xml });
     const { body } = response;
     const parser = new DOMParser();
     const responseXML = parser.parseFromString(body, 'text/xml');
@@ -412,7 +411,7 @@ const getProductionToken = async () => {
 </soapenv:Envelope>`;
 
   try {
-    const { response } = await soapRequest({ url: url, headers: headersTest, xml: xml, timeout: 10000 }); // Optional timeout parameter(milliseconds)
+    const { response } = await soapRequest({ url: url, headers: headersTest, xml: xml }); // Optional timeout parameter(milliseconds)
     const { body } = response;
     const parser = new DOMParser();
     const responseXML = parser.parseFromString(body, 'text/xml');
@@ -449,7 +448,7 @@ app.post('/api/web/procesarPeticion', jsonParser, async (request, resp) => {
 </soapenv:Envelope>`;
 
   try {
-    const { response } = await soapRequest({ url: url, headers: headers, xml: xml, timeout: 10000 });
+    const { response } = await soapRequest({ url: url, headers: headers, xml: xml });
     const { body } = response;
     const parser = new DOMParser();
     const responseXML = parser.parseFromString(body, 'text/xml');
@@ -491,7 +490,7 @@ const getTokenCarburacion = async (ip) => {
 </soapenv:Envelope>`;
 
   try {
-    const { response } = await soapRequest({ url: url, headers: headersTest, xml: xml, timeout: 10000 }); // Optional timeout parameter(milliseconds)
+    const { response } = await soapRequest({ url: url, headers: headersTest, xml: xml }); // Optional timeout parameter(milliseconds)
     const { body } = response;
     const parser = new DOMParser();
     const responseXML = parser.parseFromString(body, 'text/xml');
@@ -983,7 +982,7 @@ app.post('/api/carburacion/procesarPeticion', jsonParser, async (request, resp) 
     </soapenv:Envelope>`;
 
   try {
-    const { response } = await soapRequest({ url: url, headers: headers, xml: xml, timeout: 10000 });
+    const { response } = await soapRequest({ url: url, headers: headers, xml: xml });
     const { body } = response;
     const parser = new DOMParser();
     const responseXML = parser.parseFromString(body, 'text/xml');
