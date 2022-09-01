@@ -257,6 +257,7 @@ app.post('/api/syncClientes', jsonParser, async (request, response) => {
 app.post('/api/getServicios', async (request, response) => {
   const { host, user, password, db } = request.body.credentials;
   // const folio = request.body.folio;
+  const fecha = request.body.fecha;
   // const oportunidades = request.body.oportunidades;
 
   const credentials = {
@@ -282,7 +283,7 @@ app.post('/api/getServicios', async (request, response) => {
     console.log('Connecting to the db...');
 
     const query = util.promisify(conn.query).bind(conn);
-    const rows = await query('SELECT LPAD(cliente.cuenta, 10, "0") AS id_client, cliente.cuenta, ri505_servicio.*, autotanques.no_autotanque FROM ri505_servicio inner join autotanques ON ri505_servicio.id_autotanque = autotanques.id_autotanque inner join cliente ON ri505_servicio.id_Cliente = cliente.id_Cliente where autotanques.no_autotanque = 4802 AND ts1 BETWEEN "2022-08-17 00:00:00" and "2022-08-17 23:59:59"');
+    const rows = await query(`SELECT LPAD(cliente.cuenta, 10, "0") AS id_client, cliente.cuenta, ri505_servicio.*, autotanques.no_autotanque FROM ri505_servicio inner join autotanques ON ri505_servicio.id_autotanque = autotanques.id_autotanque inner join cliente ON ri505_servicio.id_Cliente = cliente.id_Cliente where autotanques.no_autotanque = 4802 AND ts1 BETWEEN "${fecha} 00:00:00" and "${fecha} 23:59:59"`);
     // const rows = await query('SELECT LPAD(cliente.cuenta, 10, "0") AS id_client, cliente.cuenta, ri505_servicio.*, autotanques.no_autotanque FROM ri505_servicio inner join autotanques ON ri505_servicio.id_autotanque = autotanques.id_autotanque inner join cliente ON ri505_servicio.id_Cliente = cliente.id_Cliente where ri505_servicio.id_autotanque = 19 AND ts1 BETWEEN "2022-08-21 00:00:00" and "2022-08-21 23:59:59"');
     // const rows = await query('SELECT ri505_servicio.*, autotanques.no_autotanque FROM ri505_servicio inner join autotanques ON ri505_servicio.id_autotanque = autotanques.id_autotanque where ri505_servicio.id_autotanque = 19 AND ts1 BETWEEN CONCAT(CURDATE()," 00:00:00") and CONCAT(CURDATE()," 23:59:59")');
     //     SELECT ri505_servicio.*, autotanques.no_autotanque, cliente.cuenta FROM ri505_servicio
@@ -354,7 +355,7 @@ app.post('/api/web/sb_procesarPeticion', jsonParser, async (request, resp) => {
   const url = 'http://testpotogas.sgcweb.com.mx//ws/1094AEV2/v2/soap.php';
   const token = await getToken();
 
-  if (token === '') return resp.status(401).json({ error: 'No token' });
+  if (token === '' || token === undefined) return resp.status(401).json({ error: 'Ha ocurrido un problema al generar el token. Favor de validar.' });
 
   const xml = `<soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sgc="http://www.sgcweb.com.mx/sgcweb">
   <soapenv:Header/>
@@ -497,7 +498,7 @@ const getTokenCarburacion = async (ip) => {
     const token = responseXML.getElementsByTagName('id')[0].textContent;
     return token;
   } catch (e) {
-    console.log(e);
+    console.log(`Ha ocurrido un error al generar el token: ${e.code}`);
   }
 };
 
@@ -966,9 +967,9 @@ app.post('/api/carburacion/procesarPeticion', jsonParser, async (request, resp) 
   };
 
   const token = await getTokenCarburacion(ip);
-  console.log(token);
+  console.log(`El token: ${token}`);
 
-  if (token === '') return resp.status(401).json({ error: 'No token' });
+  if (token === '' || token === undefined) return resp.status(401).json({ error: 'Ha ocurrido un problema al generar el token. Favor de validar.' });
 
   const xml = `<soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sgc="http://www.sgcweb.com/sgcweb">
     <soapenv:Header/>
@@ -990,6 +991,7 @@ app.post('/api/carburacion/procesarPeticion', jsonParser, async (request, resp) 
 
     if (items.length === 0) return resp.status(401).json({ error: 'No hay servicios' });
 
+    console.log(`Se encontraron ${items.length} servicios.`);
     let servicios = [];
 
     for (let i = 0; i < items.length; i++) {
