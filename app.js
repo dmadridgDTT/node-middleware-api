@@ -259,6 +259,7 @@ app.post('/api/getServicios', async (request, response) => {
   // const folio = request.body.folio;
   const fecha = request.body.fecha;
   const noAutotanque = request.body.no_autotanque;
+  const limit = request.body.limit;
   // const oportunidades = request.body.oportunidades;
 
   const credentials = {
@@ -289,9 +290,9 @@ app.post('/api/getServicios', async (request, response) => {
     let sqlQuery = '';
 
     if (noAutotanque !== '') {
-      sqlQuery = `SELECT LPAD(cliente.cuenta, 10, "0") AS id_client, cliente.cuenta, cliente.Nombre, ri505_servicio.*, autotanques.no_autotanque FROM ri505_servicio inner join autotanques ON ri505_servicio.id_autotanque = autotanques.id_autotanque inner join cliente ON ri505_servicio.id_Cliente = cliente.id_Cliente where autotanques.no_autotanque = ${noAutotanque} AND ts1 BETWEEN "${fecha} 00:00:00" and "${fecha} 23:59:59" limit 10;`;
+      sqlQuery = `SELECT LPAD(cliente.cuenta, 10, "0") AS id_client, cliente.cuenta, cliente.Nombre, ri505_servicio.*, autotanques.no_autotanque FROM ri505_servici inner join autotanques ON ri505_servicio.id_autotanque = autotanques.id_autotanque inner join cliente ON ri505_servicio.id_Cliente = cliente.id_Cliente where autotanques.no_autotanque = ${noAutotanque} AND ts1 BETWEEN "${fecha} 00:00:00" and "${fecha} 23:59:59" ${limit};`;
     } else {
-      sqlQuery = `SELECT LPAD(cliente.cuenta, 10, "0") AS id_client, cliente.cuenta, cliente.Nombre, ri505_servicio.*, autotanques.no_autotanque FROM ri505_servicio inner join autotanques ON ri505_servicio.id_autotanque = autotanques.id_autotanque inner join cliente ON ri505_servicio.id_Cliente = cliente.id_Cliente where ts1 BETWEEN "${fecha} 00:00:00" and "${fecha} 23:59:59" limit 10;`;
+      sqlQuery = `SELECT LPAD(cliente.cuenta, 10, "0") AS id_client, cliente.cuenta, cliente.Nombre, ri505_servicio.*, autotanques.no_autotanque FROM ri505_servicio inner join autotanques ON ri505_servicio.id_autotanque = autotanques.id_autotanque inner join cliente ON ri505_servicio.id_Cliente = cliente.id_Cliente where ts1 BETWEEN "${fecha} 00:00:00" and "${fecha} 23:59:59" ${limit};`;
     }
 
     console.log(sqlQuery);
